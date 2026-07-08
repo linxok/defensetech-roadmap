@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Telemetry Demo</title>
+</head>
+<body>
+  <h1>Live Telemetry</h1>
+  <pre id="output"></pre>
+  <script>
+    const ws = new WebSocket('ws://localhost:8000/ws');
+    const output = document.getElementById('output');
+    ws.onmessage = (e) => {
+      output.textContent += e.data + '\n';
+    };
+  </script>
+</body>
+</html>

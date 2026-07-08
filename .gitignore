@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.env
+
+# C++
+build/
+*.o
+*.a
+*.so
+*.exe
+
+# ROS2
+install/
+build/
+log/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary
+*.tmp
+*.swp

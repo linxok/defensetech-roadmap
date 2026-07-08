@@ -1,0 +1,9 @@
+graph LR
+    GCS[Наземна станція<br/>QGroundControl] -->|Telemetry 433/900MHz| FC[Flight Controller<br/>Pixhawk]
+    FC -->|PWM| ESC[ESC]
+    ESC -->|3-phase| M[Motors]
+    FC -->|UART| GPS[GPS Module]
+    FC -->|I2C| IMU[IMU]
+    FC -->|USB/ETH| CAM[Camera]
+    FC -->|UART| RADIO[Telemetry Radio]
+    PM[Power Module] -->|5V| FC

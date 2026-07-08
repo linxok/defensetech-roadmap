@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: drone-telemetry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: defensetech/frontend:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXT_PUBLIC_BACKEND_URL
+              value: "http://backend:8000"
+            - name: NEXT_PUBLIC_WS_URL
+              value: "ws://backend:8000/ws"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: drone-telemetry
+spec:
+  selector:
+    app: frontend
+  ports:
+    - port: 3000

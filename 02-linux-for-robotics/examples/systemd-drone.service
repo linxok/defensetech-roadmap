@@ -1,0 +1,13 @@
+[Unit]
+Description=Drone Telemetry Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/drone/telemetry.py
+Restart=always
+RestartSec=5
+User=drone
+
+[Install]
+WantedBy=multi-user.target

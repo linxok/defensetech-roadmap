@@ -1,0 +1,80 @@
+site_name: DefenseTech Roadmap
+site_description: Open-source course from Senior Full-Stack Developer to DefenseTech Engineer
+site_author: DefenseTech Roadmap Contributors
+site_url: https://your-username.github.io/defensetech-roadmap/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: "!!python/name:pymdownx.superfences.fence_code_format"
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - admonition
+  - toc:
+      permalink: true
+
+nav:
+  - Home: README.md
+  - Roadmap: ROADMAP.md
+  - Contributing: CONTRIBUTING.md
+  - Modules:
+      - 00 Introduction: 00-introduction/README.md
+      - 01 DefenseTech Fundamentals: 01-defense-fundamentals/README.md
+      - 02 Linux for Robotics: 02-linux-for-robotics/README.md
+      - 03 Networking: 03-networking/README.md
+      - 04 Python: 04-python/README.md
+      - 05 Modern C++: 05-modern-cpp/README.md
+      - 06 MAVLink: 06-mavlink/README.md
+      - 07 ArduPilot: 07-ardupilot/README.md
+      - 08 PX4: 08-px4/README.md
+      - 09 ROS2: 09-ros2/README.md
+      - 10 Backend Systems: 10-backend/README.md
+      - 11 Distributed Systems: 11-distributed-systems/README.md
+      - 12 Computer Vision: 12-computer-vision/README.md
+      - 13 AI: 13-ai/README.md
+      - 14 Ground Control: 14-ground-control/README.md
+      - 15 DevOps: 15-devops/README.md
+      - 16 Projects: 16-projects/README.md
+      - 17 Interview: 17-interview/README.md
+  - Docs:
+      - Setup: docs/setup.md
+      - Tools: docs/tools.md
+      - Hardware: docs/hardware-recommendations.md
+      - Glossary: docs/glossary.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/your-username/defensetech-roadmap

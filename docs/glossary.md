@@ -1,0 +1,25 @@
+# Глосарій
+
+- **UAV** — Unmanned Aerial Vehicle (безпілотний літальний апарат).
+- **UGV** — Unmanned Ground Vehicle.
+- **USV** — Unmanned Surface Vehicle.
+- **GCS** — Ground Control Station.
+- **FC** — Flight Controller.
+- **ESC** — Electronic Speed Controller.
+- **IMU** — Inertial Measurement Unit.
+- **GNSS** — Global Navigation Satellite System.
+- **Telemetry** — телеметричні дані, що передаються від дрона до станції.
+- **MAVLink** — протокол обміну повідомленнями для дронів.
+- **SITL** — Software In The Loop (симуляція).
+- **HITL** — Hardware In The Loop.
+- **ROS** — Robot Operating System.
+- **DDS** — Data Distribution Service.
+- **CV** — Computer Vision.
+- **LLM** — Large Language Model.
+- **VLM** — Vision Language Model.
+- **RAG** — Retrieval-Augmented Generation.
+- **EW** — Electronic Warfare.
+- **VTOL** — Vertical Take-Off and Landing.
+- **RTL** — Return to Launch.
+- **WAYPOINT** — точка маршруту.
+- **GEOFENCE** — віртуальна межа польоту.
