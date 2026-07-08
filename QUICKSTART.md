@@ -5,7 +5,7 @@
 ## 1. Клонування та огляд
 
 ```bash
-git clone https://github.com/your-username/defensetech-roadmap.git
+git clone https://github.com/linxok/defensetech-roadmap.git
 cd defensetech-roadmap
 ls
 ```
