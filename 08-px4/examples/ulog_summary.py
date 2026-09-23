@@ -47,7 +47,8 @@ def main() -> int:
         if wanted and data.name not in wanted:
             continue
         fields = ', '.join(data.field_data.keys())
-        print(f'  {data.name}: {len(data.data)} samples [{fields}]')
+        samples = max((len(column) for column in data.data.values()), default=0)
+        print(f'  {data.name}: {samples} samples [{fields}]')
     return 0
 
 

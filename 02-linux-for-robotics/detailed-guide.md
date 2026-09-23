@@ -16,7 +16,7 @@
 
 ## Артефакти модуля
 
-- `systemd-drone.service`
+- `drone-telemetry.service` (встановлюється як `/etc/systemd/system/drone-telemetry.service`)
 - `99-drone-serial.rules`
 - `read_serial.sh`
 - journalctl-лог перезапуску

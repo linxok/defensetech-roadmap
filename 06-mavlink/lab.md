@@ -2,124 +2,152 @@
 
 ## Мета
 
-Побудувати Python-шлюз, який отримує MAVLink-повідомлення від SITL і передає їх у форматі JSON через WebSocket.
+Побудувати шлюз `mavlink_gateway.py`, який читає MAVLink-потік і розсилає телеметрію JSON-ом через WebSocket.
 
 ## Передумови
 
-- ArduPilot SITL запущено (`sim_vehicle.py -v ArduCopter`).
-- Python 3.11+ і venv.
-- Встановлено `pymavlink`, `websockets`.
-
-## Кроки
-
-### 1. Підготовка середовища
+- Python 3.11+ і venv:
 
 ```bash
-cd ~/projects
 python3 -m venv mavlink-lab
 source mavlink-lab/bin/activate
 pip install pymavlink websockets
 ```
 
-### 2. Підключення до SITL
+- Для живої перевірки — ArduPilot SITL: `sim_vehicle.py -v ArduCopter --out=udp:127.0.0.1:14550`.
+- Автоматична перевірка `checks/check_lab.py` офлайн: вона сама пакує MAVLink-кадри через pymavlink, тож SITL для неї не потрібен.
+
+## Контракт
+
+Створіть у своїй робочій теці файл `mavlink_gateway.py` з двома обовʼязковими обʼєктами.
+
+### Функція `mavlink_to_telemetry`
 
 ```python
-from pymavlink import mavutil
-
-conn = mavutil.mavlink_connection('udp:127.0.0.1:14550')
-conn.wait_heartbeat()
-print(f"Connected to system {conn.target_system}")
+def mavlink_to_telemetry(message) -> dict | None:
+    ...
 ```
 
-### 3. Читання повідомлень
+- `message` — розпарсене MAVLink-повідомлення pymavlink.
+- Повертає JSON-сумісний `dict` або `None`.
+- Кожен dict містить поля `type`, `system_id`, `component_id`, `ts`:
+  - `type` — рядок з `message.get_type()`;
+  - `system_id` — `message.get_srcSystem()`;
+  - `component_id` — `message.get_srcComponent()`;
+  - `ts` — ISO-8601 UTC, наприклад `datetime.now(timezone.utc).isoformat()`.
+- Контрактні типи:
+  - `HEARTBEAT` → dict з `type='HEARTBEAT'` і полями `autopilot`, `base_mode`, `custom_mode`, `system_status`;
+  - `GLOBAL_POSITION_INT` → dict з `lat = lat / 1e7`, `lon = lon / 1e7`, `alt = alt / 1000.0`, `relative_alt = relative_alt / 1000.0`, `heading = hdg / 100.0` (якщо `hdg == 65535`, то `None`);
+  - усі інші типи, зокрема `PING`, → `None`.
+
+Наприклад, кадр з `lat=504501000`, `lon=305234000`, `alt=120000`, `relative_alt=100000`, `hdg=9000` перетворюється на:
+
+```json
+{
+  "type": "GLOBAL_POSITION_INT",
+  "system_id": 7,
+  "component_id": 1,
+  "ts": "2026-09-23T18:20:00+00:00",
+  "lat": 50.4501,
+  "lon": 30.5234,
+  "alt": 120.0,
+  "relative_alt": 100.0,
+  "heading": 90.0
+}
+```
+
+### Клас `TelemetryHub`
 
 ```python
-while True:
-    msg = conn.recv_match(blocking=True, timeout=1.0)
-    if msg is None:
-        continue
-    print(msg.to_dict())
+class TelemetryHub:
+    async def register(self, ws) -> None:
+        ...
+
+    async def broadcast(self, payload: dict) -> None:
+        ...
 ```
 
-У async-коді цей цикл обов’язково виконується через `asyncio.to_thread`,
-інакше event loop блокується на кожному виклику.
+- `register(ws)` додає клієнта і тримає зʼєднання, доки не завершиться `await ws.wait_closed()`, після чого прибирає клієнта з набору.
+- `broadcast(payload)` кодує payload через `json.dumps` і надсилає кожному зареєстрованому клієнту (`await ws.send(data)`).
+- Розсилайте через `asyncio.gather(..., return_exceptions=True)`. `asyncio.wait` із корутинами заборонено: у Python 3.11+ це `TypeError: Passing coroutines is forbidden, use tasks explicitly.` Сама лише наявність підрядка `asyncio.wait(` у файлі валить перевірку; `asyncio.wait_for(` — безпечний.
 
-### 4. Фільтрація GPS і батареї
+## Кроки
 
-```python
-msg = conn.recv_match(type=['GLOBAL_POSITION_INT', 'BATTERY_STATUS'], blocking=True)
-if msg.get_type() == 'GLOBAL_POSITION_INT':
-    data = {
-        'lat': msg.lat / 1e7,
-        'lon': msg.lon / 1e7,
-        'alt': msg.alt / 1000,
-    }
-elif msg.get_type() == 'BATTERY_STATUS':
-    data = {'battery': msg.battery_remaining}
-```
-
-### 5. WebSocket broadcast
+### 1. Читання MAVLink у потоці
 
 ```python
 import asyncio
 import json
+from datetime import datetime, timezone
+
 import websockets
+from pymavlink import mavutil
 
-clients = set()
 
-async def register(websocket):
-    clients.add(websocket)
-    try:
-        await websocket.wait_closed()
-    finally:
-        clients.discard(websocket)
-
-async def broadcast(payload):
-    if not clients:
-        return
-    data = json.dumps(payload)
-    await asyncio.gather(*(c.send(data) for c in clients), return_exceptions=True)
-
-async def main():
-    async with websockets.serve(register, 'localhost', 8765):
-        await telemetry_loop()
-
-async def telemetry_loop():
-    while True:
-        # recv_match блокуючий: виконуємо його в потоці
-        msg = await asyncio.to_thread(conn.recv_match, blocking=True, timeout=1.0)
-        if msg is None:
+async def read_loop(connection, hub, stop):
+    while not stop.is_set():
+        message = await asyncio.to_thread(
+            connection.recv_match, blocking=True, timeout=1.0
+        )
+        if message is None:
             continue
-        await broadcast(msg.to_dict())
-
-asyncio.run(main())
+        payload = mavlink_to_telemetry(message)
+        if payload is not None:
+            await hub.broadcast(payload)
 ```
 
-### 6. Тестування
+`recv_match(blocking=True)` — синхронний виклик, тому в async-коді його виконують через `asyncio.to_thread`, інакше event loop блокується на секунди.
 
-1. Запустіть SITL.
-2. Запустіть шлюз.
-3. Відкрийте `examples/websocket_client.html` або `wscat`.
-4. Переконайтеся, що JSON надходить.
+### 2. Сервер і хаб
 
-## Перевірка
+```python
+async def main():
+    connection = await asyncio.to_thread(
+        mavutil.mavlink_connection, 'udp:127.0.0.1:14550', source_system=255
+    )
+    await asyncio.to_thread(connection.wait_heartbeat)
+    hub = TelemetryHub()
+    stop = asyncio.Event()
+    async with websockets.serve(hub.register, '0.0.0.0', 8765):
+        reader = asyncio.create_task(read_loop(connection, hub, stop))
+        await stop.wait()
+        reader.cancel()
+        await asyncio.gather(reader, return_exceptions=True)
+    await asyncio.to_thread(connection.close)
+```
 
-Запустіть SITL і gateway, потім перевірте контракт:
+### 3. Запуск
 
 ```bash
-python checks/check_lab.py --target solution
+sim_vehicle.py -v ArduCopter --out=udp:127.0.0.1:14550
+python mavlink_gateway.py --source udp:127.0.0.1:14550 --ws-port 8765
 ```
 
-Скрипт перевіряє конвертацію кадрів, розсилку та відсутність блокуючих викликів в async-коді.
+Відкрийте `examples/websocket_client.html` (або `wscat -c ws://localhost:8765`) — у сторінці мають зʼявлятися JSON-рядки з `type` `HEARTBEAT` і `GLOBAL_POSITION_INT`.
 
-## Розбір збоїв
+### 4. Офлайн-перевірка
 
-- Немає heartbeat — SITL і gateway не бачать один одного на порту 14550
-- `RuntimeError: Passing coroutines` — `asyncio.wait` замість `gather`
-- Клієнти не отримують даних — перевірте, що `broadcast` викликається
+Якщо `mavlink_gateway.py` лежить поряд із цим `lab.md`, запускайте з теки модуля:
+
+```bash
+python checks/check_lab.py --target .
+```
+
+Для файлу в іншій теці вкажіть її: `python checks/check_lab.py --target ~/mavlink-lab`.
+
+Скрипт перевіряє саме `mavlink_gateway.py` з цільової теки: пакує pymavlink-фікстури `GLOBAL_POSITION_INT`, `HEARTBEAT` і `PING`, звіряє `type`, `lat` (50.4501) та `alt` (120.0), JSON-сумісність, реєстрацію фейкового клієнта й розсилку. Для еталона використовуйте `--target solution`.
 
 ## Очікуваний результат
 
-- Робочий `mavlink_gateway.py`.
-- WebSocket-клієнт, що отримує live telemetry.
-- README з інструкцією.
+- `mavlink_gateway.py` проходить `checks/check_lab.py`.
+- Live-потік видно у WebSocket-клієнті.
+- У коді немає `asyncio.wait(` і блокуючого `recv_match` без `asyncio.to_thread`.
+
+## Розбір збоїв
+
+- `FAIL: у модулі немає mavlink_to_telemetry` — файл лежить не в цільовій теці або названо інакше; перевірте `--target`.
+- `невірний lat` — забули поділити `lat` на `1e7` (а `alt` — на `1000`).
+- `невірний type` / PING не дає `None` — конвертер транслює зайві типи.
+- `TypeError: Passing coroutines is forbidden` — `asyncio.wait` замість `asyncio.gather`.
+- `FAIL: блокуючий recv_match викликається без asyncio.to_thread` — читання виконується прямо в async-функції.
+- Немає heartbeat — SITL і gateway на різних портах (типово `14550` UDP).

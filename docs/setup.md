@@ -16,8 +16,14 @@ sudo apt install -y git build-essential cmake python3-pip python3-venv libopencv
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-pip install pymavlink mavsdk fastapi uvicorn opencv-python numpy pyserial
+pip install -r requirements.txt -r requirements-dev.txt
 ```
+
+Важкі CV/AI-залежності (модулі 12–13) — окремо:
+`pip install -r requirements-optional.txt`.
+
+Модуль 11 (gRPC) має власне середовище через конфлікт protobuf
+із mavsdk: `python3 -m venv venv-grpc && venv-grpc/bin/pip install -r requirements-grpc.txt`.
 
 ## ROS2
 
@@ -40,7 +46,7 @@ sim_vehicle.py -v ArduCopter --console --map
 ```bash
 git clone https://github.com/PX4/PX4-Autopilot.git
 cd PX4-Autopilot
-make px4_sitl jmavsim
+make px4_sitl gz_x500
 ```
 
 ## Docker

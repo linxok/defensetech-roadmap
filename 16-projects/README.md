@@ -27,7 +27,7 @@
 
 ## Зв'язок з capstone
 
-Крок 16: фіналізувати capstone — README з архітектурою, демо-відео, тести, CI.
+Розділ «Метрики для портфоліо» у `capstone/README.md`: фіналізувати capstone — README з архітектурою, демо-відео, тести, CI.
 
 ## Типові помилки
 
@@ -39,10 +39,15 @@
 ## Первинні джерела
 
 - [GitHub: README guidelines](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes) — структура README
-- [STAR method](https://www.themuse.com/advice/star-interview-method) — історії для співбесіди
 - [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) — історія змін
 - [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) — повідомлення комітів
-- [Choose a License](https://choosealicense.com/) — ліцензія для проєкту
+- [GitHub Actions: Building and testing Python](https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python) — CI для репозиторію
+- [Semantic Versioning](https://semver.org/) — версії релізів
+
+## Додатково
+
+- [STAR method (The Muse)](https://www.themuse.com/advice/star-interview-method) — формат історій для співбесіди
+- [Choose a License](https://choosealicense.com/) — вибір ліцензії для репозиторію
 
 ## Куди далі
 

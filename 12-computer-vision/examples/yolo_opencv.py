@@ -1,4 +1,8 @@
-"""Детекція об'єктів YOLOv8 (ONNX) через OpenCV DNN.
+"""Спрощена демонстрація YOLOv8 (ONNX) через OpenCV DNN.
+
+Показує мінімальний конвеєр для одного кадру: letterbox 640×640,
+декодування виходу (1, 84, N), поріг впевненості та жадібний NMS.
+Повний конвеєр із масштабуванням координат до кадру — у `solution/detection.py`.
 
 Підготовка моделі:
 
@@ -7,11 +11,8 @@
 
 Запуск:
 
-    python yolo_opencv.py --model yolov8n.onnx --source 0
+    python yolo_opencv.py --model yolov8n.onnx --source frame.jpg
     python yolo_opencv.py --model yolov8n.onnx --source frame.jpg --output out.jpg
-
-Примітка: OpenCV DNN не потребує GPU; на Jetson використовуйте
-TensorRT-провайдера окремо (див. resources.md).
 """
 
 from __future__ import annotations
@@ -23,22 +24,11 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-COCO_NAMES = (
-    'person,bicycle,car,motorcycle,airplane,bus,train,truck,boat,traffic light,'
-    'fire hydrant,stop sign,parking meter,bench,bird,cat,dog,horse,sheep,cow,'
-    'elephant,bear,zebra,giraffe,backpack,umbrella,handbag,tie,suitcase,frisbee,'
-    'skis,snowboard,sports ball,kite,baseball bat,baseball glove,skateboard,'
-    'surfboard,tennis racket,bottle,wine glass,cup,fork,knife,spoon,bowl,banana,'
-    'apple,sandwich,orange,broccoli,carrot,hot dog,pizza,donut,cake,chair,couch,'
-    'potted plant,bed,dining table,toilet,tv,laptop,mouse,remote,keyboard,'
-    'cell phone,microwave,oven,toaster,sink,refrigerator,book,clock,vase,'
-    'scissors,teddy bear,hair drier,toothbrush'
-).split(',')
-
 INPUT_SIZE = 640
 
 
 def letterbox(frame: np.ndarray, size: int = INPUT_SIZE) -> tuple[np.ndarray, float, int, int]:
+    """Масштабує кадр у квадрат size×size без спотворення пропорцій."""
     height, width = frame.shape[:2]
     ratio = min(size / height, size / width)
     new_w, new_h = int(round(width * ratio)), int(round(height * ratio))
@@ -52,70 +42,48 @@ def letterbox(frame: np.ndarray, size: int = INPUT_SIZE) -> tuple[np.ndarray, fl
 def postprocess(
     output: np.ndarray, conf_threshold: float = 0.4, iou_threshold: float = 0.5
 ) -> list[tuple[int, float, tuple[int, int, int, int]]]:
-    """Повертає [(class_id, confidence, (x1, y1, x2, y2))] у координатах input_size."""
-    predictions = np.squeeze(output).T  # (8400, 84): xywh + 80 scores
-    boxes = predictions[:, :4]
+    """Вибирає найкращий клас для кожної рамки і придушує перекриття жадібним NMS."""
+    predictions = np.squeeze(output).T  # (N, 84): xywh + 80 scores
     scores = predictions[:, 4:]
     class_ids = scores.argmax(axis=1)
     confidences = scores[np.arange(len(scores)), class_ids]
-
     keep = confidences >= conf_threshold
-    if not keep.any():
-        return []
-
-    boxes_xywh = boxes[keep]
+    boxes = predictions[keep, :4]
     confidences = confidences[keep]
     class_ids = class_ids[keep]
-    xyxy = np.empty_like(boxes_xywh)
-    xyxy[:, 0] = boxes_xywh[:, 0] - boxes_xywh[:, 2] / 2
-    xyxy[:, 1] = boxes_xywh[:, 1] - boxes_xywh[:, 3] / 2
-    xyxy[:, 2] = boxes_xywh[:, 0] + boxes_xywh[:, 2] / 2
-    xyxy[:, 3] = boxes_xywh[:, 1] + boxes_xywh[:, 3] / 2
 
-    indices = cv2.dnn.NMSBoxes(
-        boxes_xywh.tolist(), confidences.tolist(), conf_threshold, iou_threshold
-    )
-    result: list[tuple[int, float, tuple[int, int, int, int]]] = []
-    for index in np.array(indices).flatten():
-        x1, y1, x2, y2 = (int(v) for v in xyxy[index])
-        result.append((int(class_ids[index]), float(confidences[index]), (x1, y1, x2, y2)))
+    xyxy = np.empty_like(boxes)
+    xyxy[:, 0] = boxes[:, 0] - boxes[:, 2] / 2
+    xyxy[:, 1] = boxes[:, 1] - boxes[:, 3] / 2
+    xyxy[:, 2] = boxes[:, 0] + boxes[:, 2] / 2
+    xyxy[:, 3] = boxes[:, 1] + boxes[:, 3] / 2
+
+    order = confidences.argsort()[::-1]
+    result = []
+    while order.size:
+        best = order[0]
+        result.append((int(class_ids[best]), float(confidences[best]),
+                       tuple(int(v) for v in xyxy[best])))
+        rest = order[1:]
+        if rest.size == 0:
+            break
+        x1 = np.maximum(xyxy[best, 0], xyxy[rest, 0])
+        y1 = np.maximum(xyxy[best, 1], xyxy[rest, 1])
+        x2 = np.minimum(xyxy[best, 2], xyxy[rest, 2])
+        y2 = np.minimum(xyxy[best, 3], xyxy[rest, 3])
+        intersection = np.clip(x2 - x1, 0, None) * np.clip(y2 - y1, 0, None)
+        area_best = (xyxy[best, 2] - xyxy[best, 0]) * (xyxy[best, 3] - xyxy[best, 1])
+        area_rest = (xyxy[rest, 2] - xyxy[rest, 0]) * (xyxy[rest, 3] - xyxy[rest, 1])
+        iou = intersection / (area_best + area_rest - intersection)
+        order = rest[iou <= iou_threshold]
     return result
-
-
-def scale_to_frame(
-    detections: list[tuple[int, float, tuple[int, int, int, int]]],
-    ratio: float,
-    pad_w: int,
-    pad_h: int,
-    frame_shape: tuple[int, ...],
-) -> list[tuple[int, float, tuple[int, int, int, int]]]:
-    height, width = frame_shape[:2]
-    scaled = []
-    for class_id, confidence, (x1, y1, x2, y2) in detections:
-        box = (
-            max(0, min(width, int((x1 - pad_w) / ratio))),
-            max(0, min(height, int((y1 - pad_h) / ratio))),
-            max(0, min(width, int((x2 - pad_w) / ratio))),
-            max(0, min(height, int((y2 - pad_h) / ratio))),
-        )
-        scaled.append((class_id, confidence, box))
-    return scaled
-
-
-def draw(frame: np.ndarray, detections: list[tuple[int, float, tuple[int, int, int, int]]]) -> np.ndarray:
-    for class_id, confidence, (x1, y1, x2, y2) in detections:
-        label = f'{COCO_NAMES[class_id]} {confidence:.2f}'
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        cv2.putText(frame, label, (x1, max(20, y1 - 8)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-    return frame
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--model', type=Path, required=True)
-    parser.add_argument('--source', default='0', help='індекс камери або шлях до файлу')
-    parser.add_argument('--output', type=Path, help='куди зберегти кадр/відео')
+    parser.add_argument('--source', default='0', help='зображення або індекс камери')
+    parser.add_argument('--output', type=Path, help='куди зберегти розмічений кадр')
     parser.add_argument('--conf', type=float, default=0.4)
     return parser.parse_args()
 
@@ -125,41 +93,35 @@ def main() -> int:
     if not args.model.is_file():
         print(f'model not found: {args.model}', file=sys.stderr)
         return 1
-
     net = cv2.dnn.readNetFromONNX(str(args.model))
+
     source: int | str = int(args.source) if args.source.isdigit() else args.source
     capture = cv2.VideoCapture(source)
     if not capture.isOpened():
         print(f'cannot open source: {args.source}', file=sys.stderr)
         return 1
-
-    printed = False
     try:
-        while True:
-            ok, frame = capture.read()
-            if not ok:
-                break
-            blob = cv2.dnn.blobFromImage(frame, 1 / 255.0, (INPUT_SIZE, INPUT_SIZE),
-                                         swapRB=True, crop=False)
-            net.setInput(blob)
-            output = net.forward()
-            detections = scale_to_frame(
-                postprocess(output, args.conf), *letterbox(frame)[1:], frame.shape
-            )
-            if not printed:
-                print(f'frame {frame.shape[1]}x{frame.shape[0]}: '
-                      f'{len(detections)} detections')
-                printed = True
-            if args.output and source != 0 or args.output:
-                cv2.imwrite(str(args.output), draw(frame, detections))
-                print(f'saved: {args.output}')
-                break
-            cv2.imshow('detection', draw(frame, detections))
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+        ok, frame = capture.read()
     finally:
         capture.release()
-        cv2.destroyAllWindows()
+    if not ok:
+        print('cannot read frame', file=sys.stderr)
+        return 1
+
+    canvas, _, _, _ = letterbox(frame)
+    blob = cv2.dnn.blobFromImage(canvas, 1 / 255.0, (INPUT_SIZE, INPUT_SIZE),
+                                 swapRB=True, crop=False)
+    net.setInput(blob)
+    detections = postprocess(net.forward(), args.conf)
+    print(f'{len(detections)} detections (координати 640×640, без масштабування до кадру)')
+
+    for class_id, confidence, (x1, y1, x2, y2) in detections:
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        cv2.putText(frame, f'{class_id} {confidence:.2f}', (x1, max(20, y1 - 8)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+    if args.output:
+        cv2.imwrite(str(args.output), frame)
+        print(f'saved: {args.output}')
     return 0
 
 

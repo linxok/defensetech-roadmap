@@ -7,6 +7,7 @@
 - [ ] HEARTBEAT і GLOBAL_POSITION_INT видно в WebSocket-клієнті
 - [ ] Парсер кадру витримує пошкоджений CRC (тест)
 - [ ] Немає `asyncio.wait(` у коді gateway
+- [ ] Падіння або вимкнення HTTP-backend не зупиняє WebSocket-розсилку (див. `practice.md`)
 - [ ] Failsafe RTL перевірено в SITL хоч раз
 
 Повний прогін: `python scripts/run_lab_checks.py --module 06-mavlink`.

@@ -7,8 +7,8 @@
 
 Запуск:
 
-    python yolo_opencv.py --model yolov8n.onnx --source 0
-    python yolo_opencv.py --model yolov8n.onnx --source frame.jpg --output out.jpg
+    python detection.py --model yolov8n.onnx --source 0
+    python detection.py --model yolov8n.onnx --source frame.jpg --output out.jpg
 
 Примітка: OpenCV DNN не потребує GPU; на Jetson використовуйте
 TensorRT-провайдера окремо (див. resources.md).
@@ -139,18 +139,19 @@ def main() -> int:
             ok, frame = capture.read()
             if not ok:
                 break
-            blob = cv2.dnn.blobFromImage(frame, 1 / 255.0, (INPUT_SIZE, INPUT_SIZE),
+            canvas, ratio, pad_w, pad_h = letterbox(frame)
+            blob = cv2.dnn.blobFromImage(canvas, 1 / 255.0, (INPUT_SIZE, INPUT_SIZE),
                                          swapRB=True, crop=False)
             net.setInput(blob)
             output = net.forward()
             detections = scale_to_frame(
-                postprocess(output, args.conf), *letterbox(frame)[1:], frame.shape
+                postprocess(output, args.conf), ratio, pad_w, pad_h, frame.shape
             )
             if not printed:
                 print(f'frame {frame.shape[1]}x{frame.shape[0]}: '
                       f'{len(detections)} detections')
                 printed = True
-            if args.output and source != 0 or args.output:
+            if args.output:
                 cv2.imwrite(str(args.output), draw(frame, detections))
                 print(f'saved: {args.output}')
                 break

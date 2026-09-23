@@ -1,25 +1,21 @@
-"""Генерація місії з текстового запиту + валідація JSON-схемою.
+"""Спрощена демонстрація офлайн-генерації місії: Pydantic-валідація без мережі.
+
+Показує мінімум: моделі з обмеженнями та детермінований генератор.
+Повна версія з LLM, таймаутом і fallback — у `solution/mission_prompt.py`.
 
 Запуск:
 
-    OPENAI_API_KEY=... python mission_prompt.py \
-        --lat 50.4 --lon 30.5 --alt 100 --count 5
-
-Без `OPENAI_API_KEY` використовується офлайн-генератор (survey-сітка) —
-це гарантує, що приклад запускається в CI без мережі й ключів.
+    python mission_prompt.py --lat 50.4501 --lon 30.5234 --alt 100 --count 5
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
-import sys
-from typing import Any
 
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import BaseModel, Field, field_validator
 
-MODEL = 'gpt-4o-mini'
+STEP = 0.0002  # ~22 м по широті
 
 
 class Waypoint(BaseModel):
@@ -38,68 +34,18 @@ class Mission(BaseModel):
     def validate_waypoints(cls, value: list[Waypoint]) -> list[Waypoint]:
         if not 2 <= len(value) <= 100:
             raise ValueError('mission must have 2..100 waypoints')
-        seqs = [w.seq for w in value]
-        if seqs != list(range(len(value))):
+        if [w.seq for w in value] != list(range(len(value))):
             raise ValueError('seq must be contiguous starting at 0')
         return value
 
 
-PROMPT = (
-    'Generate a survey mission as JSON: {"name": str, "waypoints": '
-    '[{"seq": int, "lat": float, "lon": float, "alt": float}]}. '
-    'Waypoints must be ordered, seq starts at 0, altitude in meters. '
-    'Center: lat={lat}, lon={lon}, altitude={alt} m, waypoints: {count}.'
-)
-
-
 def offline_mission(lat: float, lon: float, alt: float, count: int) -> Mission:
-    """Детермінована survey-сітка: 2 ряди по половина точок."""
-    columns = (count + 1) // 2
-    step = 0.0002  # ~22 m по широті
-    waypoints = []
-    for row in range(2):
-        for column in range(columns):
-            if len(waypoints) >= count:
-                break
-            offset_lat = step * row
-            offset_lon = step * (column if row == 0 else columns - 1 - column)
-            waypoints.append(
-                Waypoint(
-                    seq=len(waypoints),
-                    lat=round(lat + offset_lat, 6),
-                    lon=round(lon + offset_lon, 6),
-                    alt=alt,
-                )
-            )
-    return Mission(name=f'survey-{count}wp', waypoints=waypoints)
-
-
-def llm_mission(lat: float, lon: float, alt: float, count: int) -> Mission:
-    from openai import OpenAI
-
-    client = OpenAI()
-    response = client.chat.completions.create(
-        model=MODEL,
-        response_format={'type': 'json_object'},
-        messages=[
-            {'role': 'system', 'content': 'You generate safe UAV survey missions.'},
-            {'role': 'user', 'content': PROMPT.format(lat=lat, lon=lon, alt=alt, count=count)},
-        ],
-        timeout=30,
-    )
-    raw: Any = json.loads(response.choices[0].message.content)
-    return Mission.model_validate(raw)
-
-
-def generate(lat: float, lon: float, alt: float, count: int) -> Mission:
-    if not os.environ.get('OPENAI_API_KEY'):
-        print('OPENAI_API_KEY is not set: using offline generator', file=sys.stderr)
-        return offline_mission(lat, lon, alt, count)
-    try:
-        return llm_mission(lat, lon, alt, count)
-    except (ValidationError, json.JSONDecodeError) as exc:
-        print(f'LLM answer failed validation ({exc}); falling back offline', file=sys.stderr)
-        return offline_mission(lat, lon, alt, count)
+    """Найпростіша детермінована місія: точки вздовж паралелі."""
+    waypoints = [
+        Waypoint(seq=index, lat=lat, lon=round(lon + STEP * index, 6), alt=alt)
+        for index in range(count)
+    ]
+    return Mission(name=f'offline-{count}wp', waypoints=waypoints)
 
 
 def parse_args() -> argparse.Namespace:
@@ -113,11 +59,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    try:
-        mission = generate(args.lat, args.lon, args.alt, args.count)
-    except ValidationError as exc:
-        print(f'invalid input: {exc}', file=sys.stderr)
-        return 1
+    mission = offline_mission(args.lat, args.lon, args.alt, args.count)
     print(json.dumps(mission.model_dump(), indent=2, ensure_ascii=False))
     return 0
 

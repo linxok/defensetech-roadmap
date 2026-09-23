@@ -5,11 +5,11 @@
 
 ## Первинні джерела
 
-- [PX4 User Guide](https://docs.px4.io/main/en/)концепції та параметри
-- [PX4 Developer Guide: uORB](https://docs.px4.io/main/en/middleware/uorb.html)pub/sub-архітектура
-- [MAVSDK Python](https://mavsdk.mavlink.io/main/en/python/)System, param, telemetry
-- [pyulog](https://github.com/PX4/pyulog)читання ULog
-- [PX4 Parameter Reference](https://docs.px4.io/main/en/advanced_config/parameter_reference.html)повний список параметрів
+- [PX4 User Guide](https://docs.px4.io/main/en/) — концепції та параметри
+- [PX4 Developer Guide: uORB](https://docs.px4.io/main/en/middleware/uorb.html) — pub/sub-архітектура
+- [MAVSDK Python](https://mavsdk.mavlink.io/main/en/python/) — System, param, telemetry
+- [pyulog](https://github.com/PX4/pyulog) — читання ULog
+- [PX4 Parameter Reference](https://docs.px4.io/main/en/advanced_config/parameter_reference.html) — повний список параметрів
 
 ## Додатково
 

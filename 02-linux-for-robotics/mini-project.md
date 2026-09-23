@@ -14,7 +14,7 @@
 ## Definition of Done
 
 - Сервіс стартує після reboot
-- `systemctl status drift` показує активний стан
+- `systemctl status drone-serial` показує активний стан
 - Збій порту не валить процес
 - Метрики видно в journalctl
 

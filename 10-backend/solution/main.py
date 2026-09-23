@@ -3,7 +3,7 @@
 Запуск:
 
     RABBITMQ_URL=amqp://guest:guest@localhost:5672/ \
-        uvicorn telemetry_pipeline:app --reload
+        uvicorn main:app --reload
 
 Важливо: з'єднання з брокером створюється у lifespan, а не при імпорті.
 Синхронний pika виконується через asyncio.to_thread.
@@ -20,6 +20,7 @@ from typing import Any, AsyncIterator, Protocol
 
 import pika
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import PlainTextResponse
 
 log = logging.getLogger('telemetry_pipeline')
 
@@ -28,6 +29,8 @@ QUEUE = 'telemetry'
 
 
 class Publisher(Protocol):
+    async def connect(self) -> None: ...
+
     async def publish(self, body: bytes) -> None: ...
 
     async def close(self) -> None: ...
@@ -69,6 +72,8 @@ class RabbitPublisher:
 
 
 def create_app(publisher: Publisher | None = None) -> FastAPI:
+    metrics: dict[str, int] = {'accepted': 0, 'publish_errors': 0}
+
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.publisher = publisher or RabbitPublisher(RABBITMQ_URL)
@@ -86,12 +91,30 @@ def create_app(publisher: Publisher | None = None) -> FastAPI:
             body = json.dumps(data).encode()
         except (TypeError, ValueError) as exc:
             raise HTTPException(status_code=422, detail=f'invalid payload: {exc}') from exc
-        await app.state.publisher.publish(body)
+        try:
+            await app.state.publisher.publish(body)
+        except Exception:
+            metrics['publish_errors'] += 1
+            log.exception('failed to publish telemetry')
+            raise
+        metrics['accepted'] += 1
         return {'status': 'queued'}
 
     @app.get('/health')
     async def health() -> dict[str, str]:
         return {'status': 'ok'}
+
+    @app.get('/metrics')
+    async def metrics_endpoint() -> PlainTextResponse:
+        lines = (
+            '# HELP telemetry_accepted_total Telemetry frames accepted by the API.',
+            '# TYPE telemetry_accepted_total counter',
+            f"telemetry_accepted_total {metrics['accepted']}",
+            '# HELP telemetry_publish_errors_total Failed publishes to the queue.',
+            '# TYPE telemetry_publish_errors_total counter',
+            f"telemetry_publish_errors_total {metrics['publish_errors']}",
+        )
+        return PlainTextResponse('\n'.join(lines) + '\n')
 
     return app
 

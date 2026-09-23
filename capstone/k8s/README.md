@@ -28,7 +28,11 @@ kubectl apply -f backend.yaml -f worker.yaml -f gateway.yaml -f frontend.yaml
 ```bash
 kubectl -n drone-telemetry get pods
 kubectl -n drone-telemetry port-forward svc/backend 8000:8000
+kubectl -n drone-telemetry port-forward svc/frontend 3000:3000
 ```
+
+Браузер відкриває http://localhost:3000; WebSocket іде на
+`ws://localhost:8000/ws`, тому port-forward backend має бути активним.
 
 Sim/SITL у Kubernetes не входить: MAVLink-джерело (sim або SITL)
 запускається поза кластером і надсилає UDP на Service gateway.

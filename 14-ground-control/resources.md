@@ -5,11 +5,11 @@
 
 ## Первинні джерела
 
-- [MDN: WebSocket API](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)клієнт, reconnect, heartbeat
-- [React docs](https://react.dev/learn)стан, ефекти, оптимізація
-- [Leaflet docs](https://leafletjs.com/reference.html)маркери, полілінії, тайли
-- [MapLibre GL](https://maplibre.org/maplibre-gl-js/docs/)векторні карти
-- [OpenStreetMap tile usage](https://operations.osmfoundation.org/policies/tiles/)правила використання тайлів
+- [MDN: WebSocket API](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) — клієнт, reconnect, heartbeat
+- [React docs](https://react.dev/learn) — стан, ефекти, оптимізація
+- [Leaflet docs](https://leafletjs.com/reference.html) — маркери, полілінії, тайли
+- [MapLibre GL](https://maplibre.org/maplibre-gl-js/docs/) — векторні карти
+- [OpenStreetMap tile usage](https://operations.osmfoundation.org/policies/tiles/) — правила використання тайлів
 
 ## Додатково
 

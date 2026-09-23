@@ -1,11 +1,12 @@
 # Object Detection Demo
 
 Запуск YOLO для детекції об'єктів у відеофайлі або з веб-камери.
+Демо працює офлайн: модель використовується локальна, без завантаження з мережі.
 
 ## Встановлення
 
 ```bash
-pip install ultralytics opencv-python
+pip install -r requirements.txt
 ```
 
 ## Запуск
@@ -17,5 +18,5 @@ python detect.py --source video.mp4 --output out.mp4
 ## Опції
 
 - `--source`: шлях до відео або `0` для веб-камери.
-- `--model`: `yolov8n.pt`, `yolov8s.pt` тощо.
+- `--model`: шлях до локальних ваг, напр. `yolov8n.pt`; якщо файла немає, скрипт завершується з помилкою (без автозавантаження).
 - `--output`: шлях для збереження результату.

@@ -2,50 +2,102 @@
 
 > Статус: complete
 
-Керувати SITL через pymavlink: режими, ARM, зліт, місії, RTL — і зробити це безпечно, з ACK і таймаутами.
+Навчитися керувати Copter у SITL через pymavlink: перемикати режими, озброювати, виконувати takeoff і місії, повертати апарат додому. Модуль дає навичку писати керуючий сервіс над MAVLink так, щоб кожна команда мала підтвердження, кожне очікування — таймаут, а кожен failsafe — перевірений параметр. Артефакт модуля — REST API, який проходить офлайн-перевірку і працює з живим SITL.
 
 ## Що потрібно зрозуміти
 
-- Режими Copter: STABILIZE, ALT_HOLD, LOITER, GUIDED, AUTO, RTL, LAND. GUIDED (custom mode 4) потрібен для команд керування точкою.
-- ARM — команда `MAV_CMD_COMPONENT_ARM_DISARM`; без успішного ACK вважати дрон озброєним заборонено.
-- Зліт: `MAV_CMD_NAV_TAKEOFF` з висотою; після зльоту позиція керується `SET_POSITION_TARGET_LOCAL_NED` у GUIDED.
-- Місії: `MISSION_COUNT` → `MISSION_REQUEST_INT` → `MISSION_ITEM_INT` → `MISSION_ACK`. Типова помилка — не дочекатися MISSION_ACK.
-- RTL повертає на home-позицію і сідає; домашня точка фіксується при ARM, тому зміна home у польоті — окрема команда.
-- Failsafe: `FS_THR_ENABLE=1` (втрата RC), `FS_GCS_ENABLE` (втрата GCS), `FS_BATT_VOLTAGE`, `FENCE_ENABLE` + `FENCE_ACTION=1` (RTL).
-- Lua-скрипти на борту (`SCR_ENABLE`) дозволяють кастомну логіку без перезбірки прошивки — але кожен скрипт має таймаут і не блокує loop.
-- Сигнали безпеки на землі: пропелери знято до першого ARM, motors disarmed у SITL за замовчуванням.
+- SITL запускається командою `sim_vehicle.py -v ArduCopter`; автопілот сам відкриває TCP-сервер на порту `5762`, тому pymavlink підключається до `tcp:127.0.0.1:5762` як клієнт. Другому клієнту потрібен окремий порт: `--out=tcpin:0.0.0.0:5763`.
+- Режим польоту видно з HEARTBEAT (1 Гц) у полі `custom_mode`: GUIDED = 4, AUTO = 3, RTL = 6, LAND = 9. У GUIDED автопілот приймає цільову точку `SET_POSITION_TARGET_LOCAL_NED`, в AUTO виконує завантажену місію, в RTL летить на home і сідає.
+- ARM — це `MAV_CMD_COMPONENT_ARM_DISARM` (400); примусовий disarm — той самий ID із `param2=21196`. Озброєним дрон вважається лише після `COMMAND_ACK` із `result=MAV_RESULT_ACCEPTED` (0).
+- Takeoff — `MAV_CMD_NAV_TAKEOFF` (22) у режимі GUIDED після ARM, висота передається сьомим параметром. Якщо передумови не виконані (немає ARM, не GUIDED, поганий EKF), ACK приходить із `result=DENIED` (2).
+- Місія завантажується обміном `MISSION_COUNT` → `MISSION_REQUEST_INT` → `MISSION_ITEM_INT` → `MISSION_ACK`; успіх — це `MISSION_ACK.type == MAV_MISSION_ACCEPTED` (0). Старт без `MISSION_ACK` — найпоширеніша причина «порожньої» місії.
+- Failsafe-параметри Copter: `FS_THR_ENABLE=1` (втрата RC), `FS_GCS_ENABLE` і `FS_GCS_TIMEOUT` (втрата GCS), `FS_BATT_VOLTAGE`/`FS_BATT_CAPACITY`. Геозона: `FENCE_ENABLE=1`, `FENCE_ACTION=1` (RTL при порушенні), `FENCE_RADIUS`, `FENCE_ALT_MAX`.
+- Home фіксується в момент першого ARM; у польоті його змінює лише окрема команда `MAV_CMD_DO_SET_HOME`.
+- Lua-скрипти (`SCR_ENABLE=1`, тека `APM/scripts`) виконуються кооперативно з низьким пріоритетом: `SCR_VM_I_COUNT` задає бюджет VM-інструкцій на такт, а автоматичного таймауту, який би вбив скрипт, немає. Нескінченний цикл в `update()` не перерветься — він лише зсуне розклад решти скриптів.
+- Перед першим ARM пропелери знято; SITL стартує з вимкненими моторами, а факт озброєння видно в `base_mode` HEARTBEAT (біт `MAV_MODE_FLAG_SAFETY_ARMED`, 128).
+- Pre-arm checks вирішують, чи дозволено ARM: поки обовʼязкові перевірки не пройдено, ACK повертає відмову, а причина приходить окремим `STATUSTEXT`. Параметр `ARMING_CHECK` керує набором перевірок — у SITL його можна звузити для налагодження, але не на залізі.
+- Частота телеметрії керується `SET_MESSAGE_INTERVAL` або `SRx_*`-параметрами. Свіжість кадрів перевіряйте за монотонним `time_boot_ms`, а не за часом отримання на хості: інакше «автопілот завис» і «канал мовчить» виглядають однаково.
+- Зміна режиму має два шляхи — `SET_MODE` і `MAV_CMD_DO_SET_MODE`; pymavlink `set_mode` робить це за вас, але результат усе одно підтверджується новим HEARTBEAT, бо команду можуть відкинути.
+- Місії мають типи (`MAV_MISSION_TYPE_MISSION`, `..._FENCE`, `..._RALLY`): `MISSION_COUNT` несе тип, і змішування типів в одному обміні — типова причина невідповіді.
+- Геозона при порушенні спершу надсилає `STATUSTEXT`, а вже потім виконує `FENCE_ACTION`; тому відсутність повідомлень у GCS ще не означає, що захист вимкнено.
+
+- Порядок дій у керованому польоті фіксований: режим → ARM → takeoff → цільові точки → RTL/LAND. Takeoff у GUIDED без ARM відхиляється, а зміна режиму після зльоту не скасовує вже виконану команду.
+- У SITL втрату RC моделює `SIM_RC_FAIL=1`, а втрату GCS — припинення heartbeat від клієнта: обидва сценарії мусять привести до дії з `FS_*` і бути видимими в HEARTBEAT як зміна режиму.
+- `COMMAND_LONG` приймає `target_system` і `target_component`: нуль означає «всім» і для команд часто ігнорується, тому беріть адресата з HEARTBEAT автопілота.
+- `ARMING_CHECK` не можна вимикати на залізі: у SITL це інструмент налагодження, у польоті — останній барʼєр перед зльотом із неперевіреними датчиками.
+
+## Анатомія команди
+
+1. Дочекатися HEARTBEAT — це доказ, що автопілот живий, і джерело поточного `custom_mode`.
+2. Налаштувати потік телеметрії, щоб мати чим підтвердити виконання команди.
+3. Перевести апарат у режим, який підтримує потрібну дію (для керованого польоту — GUIDED).
+4. Надіслати `COMMAND_LONG` і дочекатися `COMMAND_ACK` із конкретним `result`.
+5. Підтвердити фізичний ефект за телеметрією: висота, позиція, `custom_mode`, `base_mode`.
+6. Завершити політ штатно (RTL/LAND) і переконатися, що мотори вимкнено.
+7. Зафіксувати результат: `custom_mode`, `STATUSTEXT` і значення телеметрії — щоб інцидент можна було відтворити.
+8. Повторити сценарій на чистому SITL: успіх, що залежить від стану сесії, не вважається перевіреним.
 
 ## Контрольні питання
 
-1. Який режим потрібен для takeoff у Copter і як він задається?
-2. Як виглядає повний обмін для завантаження місії?
-3. Які параметри відповідають за RTL при втраті RC і GCS?
-4. Чому команду без COMMAND_ACK не можна вважати виконаною?
-5. Як перевірити failsafe в SITL, не маючи пульта?
+1. Яке значення `custom_mode` відповідає GUIDED і як `GET /status` доводить, що режим справді змінився?
+2. Який повний обмін завершується `MISSION_ACK.type == 0` і на якому кроці завантаження найчастіше зависає?
+3. Як у SITL змоделювати втрату RC чи GCS без пульта і в якому полі HEARTBEAT видно спрацювання failsafe?
+4. Чому `COMMAND_ACK` із `result=4` не можна вважати успіхом і як це відкидає код?
+5. Що обмежує Lua-скрипт, якщо в нього немає автоматичного таймауту, і чим це підтвердити?
+6. Як перевірити, що команда takeoff дійшла до автопілота, а не загубилася в API-шарі?
+7. Коли фіксується home-позиція і як її змінити, не сідаючи?
+8. Які вимоги до життєвого циклу й тестованості доводить `checks/check_lab.py`?
+9. Яким параметром керують частотою телеметрії і як переконатися, що кадри свіжі?
+10. Як за `STATUSTEXT` і `COMMAND_ACK` відрізнити відмову автопілота від втрати каналу?
 
 ## Очікуваний результат
 
-REST API над SITL з ін’єкцією з’єднання і тестами (`solution/ardupilot_api.py`) + перевірений failsafe-сценарій.
+REST API `solution/ardupilot_api.py` з фабрикою `create_app(drone=None)`: `/arm`, `/takeoff?alt=`, `/rtl`, `/status`, де MAVLink-зʼєднання створюється лише в `lifespan`. Офлайн-перевірка `python checks/check_lab.py --target solution` друкує `PASS: API керує дроном через інʼєкцію та валідує команди`. Плюс сценарій failsafe, відтворений у SITL за кроками `lab.md`.
 
 ## Зв'язок з capstone
 
-Крок 7: команди capstone (ARM/takeoff/RTL) — той самий рівень; REST API можна підключити як сервіс керування.
+`capstone/README.md` → «Обмеження» прямо фіксує: «Місії та команди не реалізовані: це завдання модулів 07 і 16», а «Що далі» п. 2 пропонує додати ARM/takeoff/RTL. Цей модуль закриває саме цю прогалину: `create_app` можна підняти поруч із gateway як сервіс командування, а інʼєкція дрона дає тестувати його без польотного контролера.
+
+## Межі модуля
+
+- Формат кадрів MAVLink, CRC і signing — предмет модуля 06; тут протокол використовується як готовий транспорт.
+- Параметри, uORB і логи PX4 — модуль 08; спільними залишаються лише ідеї команд.
+- Публікація телеметрії в ROS2 — модуль 09.
+- Планування місій і UI оператора — модулі 14 і 16; тут важлива серверна сторона керування.
+- Безпека каналу (signing, шифрування) — тема модуля 06 і налаштувань телеметрії, а не цього сервісу.
+
+## Як перевіряється
+
+- `python checks/check_lab.py --target <тека>` імпортує `ardupilot_api.py` і підставляє власний `FakeDrone`, тому SITL для перевірки не потрібен.
+- Перевіряються коди відповідей: `/arm`, `/takeoff?alt=20`, `/rtl` — 200, `/takeoff?alt=500` — 400 або 422, `/status` містить `custom_mode`.
+- Окремо доводиться, що `lifespan` викликав `connect()` і `close()`.
+- Окремо доводиться, що `('takeoff', 20.0)` дійшов до дрона — команда не загубилася в HTTP-шарі.
+- Еталон курсу — `--target solution`; на шаблоні без фабрики скрипт падає з `FAIL: потрібна фабрика create_app(...)`.
+- Живий SITL-сценарій failsafe залишається ручним: його результат фіксується в логах, а не в CI.
 
 ## Типові помилки
 
-- Створювати MAVLink-з’єднання при імпорті модуля: без SITL сервіс не стартує.
-- Слати takeoff без попереднього ARM і mode GUIDED — команда ігнорується.
-- Викликати `recv_match` без timeout у циклі очікування ACK — вічне зависання.
-- Не перевіряти `result` у COMMAND_ACK: відмова виглядає як успіх.
+- `OSError: [Errno 98] Address already in use` — у `sim_vehicle.py` додано `--out=tcpin:0.0.0.0:5762`, хоча SITL уже слухає цей порт; приберіть `--out` або відкрийте `5763`.
+- `TimeoutError: no HEARTBEAT received` або нескінченне очікування — `recv_match(type='HEARTBEAT')` викликано без явного `timeout`/`blocking=False`; кожне очікування ACK мусить мати дедлайн.
+- Takeoff нічого не робить: у відповіді `COMMAND_ACK result=DENIED (2)` — команду надіслано без попереднього ARM або не в GUIDED.
+- `FAIL: модуль не імпортується: ...` у перевірці, якщо `MavlinkDrone` відкриває зʼєднання на рівні модуля; створювати його можна лише в `lifespan`.
+- Місія «завантажена», але не виконується: `MISSION_COUNT` надіслано й одразу старт без очікування `MISSION_ACK`.
+- Геозона не виконує RTL: `FENCE_ENABLE=1`, але `FENCE_ACTION=0` (лише Report) — порушення видно в `STATUSTEXT`, але апарат не повертається.
+- Оновлення Lua-скриптів «зависають»: `update()` не повертає керування і зʼїдає бюджет `SCR_VM_I_COUNT`, затримуючи інші скрипти.
+- `AttributeError: 'NoneType' object has no attribute 'to_dict'` — `recv_match` повернув `None` (кадру не було у вікні), а код одразу викликав `to_dict()`; перевіряйте `None` до розбору.
+- `FAIL: lifespan має викликати connect() і close()` — життєвий цикл обійдено: зʼєднання створюється поза фабрикою або без `await`.
+- Команда «нічого не робить»: у `command_long_send` передано `target_system=0`; для команд адресат має бути конкретним (з HEARTBEAT).
 
 ## Первинні джерела
 
-- [ArduPilot Copter Docs](https://ardupilot.org/copter/) — режими, параметри, місії
-- [ArduPilot Dev Docs](https://ardupilot.org/dev/index.html) — SITL, Lua, архітектура
-- [MAVLink Common Messages](https://mavlink.io/en/messages/common.html) — команди та їхні параметри
-- [pymavlink examples](https://github.com/ArduPilot/pymavlink/tree/master/examples) — ready-код для ARM, takeoff, mission
-- [ArduPilot parameter reference](https://ardupilot.org/copter/docs/parameters.html) — FS_*, FENCE_*, WPNAV_*
+- [Copter flight modes](https://ardupilot.org/copter/docs/flight-modes.html) — числові режими та їхня логіка.
+- [SITL](https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html) — архітектура симулятора й порти.
+- [Copter parameters](https://ardupilot.org/copter/docs/parameters.html) — `FS_*`, `FENCE_*`, `SCR_*` з діапазонами.
+- [Lua scripts](https://ardupilot.org/copter/docs/common-lua-scripts.html) — `SCR_ENABLE`, `SCR_VM_I_COUNT`, модель виконання.
+- [MAV_RESULT](https://mavlink.io/en/messages/common.html#MAV_RESULT) — значення `result` у `COMMAND_ACK`.
+- [pymavlink](https://github.com/ArduPilot/pymavlink) — `mavutil`, `arducopter_arm`, `set_mode`.
+- [MAVLink command protocol](https://mavlink.io/en/services/command.html) — діалог `COMMAND_LONG`/`COMMAND_ACK` і коди результатів.
 
 ## Куди далі
 
-Далі: `lab.md` → `detailed-guide.md` → `checklist.md`.
+`lab.md` — покрокова лабораторна з REST API над SITL; далі `detailed-guide.md` і `checklist.md`. Після неї логічно перейти до 08 (PX4: параметри й логи), а командування з цього модуля використати в capstone. Глибші сценарії — автономні місії з геозонами і повторювані польоти — розібрано в `practice.md`.

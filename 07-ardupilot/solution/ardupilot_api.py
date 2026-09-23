@@ -1,8 +1,13 @@
 """REST API над ArduPilot SITL.
 
-Передумова:
+Передумова (SITL уже слухає TCP 5762 — додатковий --out не потрібен):
 
-    sim_vehicle.py -v ArduCopter --out=tcpin:0.0.0.0:5762
+    sim_vehicle.py -v ArduCopter
+
+Якщо 5762 зайнятий іншим клієнтом, відкрийте другий порт:
+
+    sim_vehicle.py -v ArduCopter --out=tcpin:0.0.0.0:5763
+    export MAVLINK_URL=tcp:127.0.0.1:5763
 
 Запуск:
 

@@ -1,0 +1,16 @@
+[Unit]
+Description=Drone telemetry demo unit
+After=network-online.target
+
+[Service]
+Type=simple
+User=dronesvc
+Group=dialout
+ExecStart=/opt/drone-telemetry/read_serial.sh /dev/ttyFC 57600
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

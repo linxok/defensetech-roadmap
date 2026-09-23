@@ -4,9 +4,9 @@
 Самозвіт «зрозумів» не зараховується.
 
 - [ ] `python checks/check_lab.py --target solution` проходить
-- [ ] API стартує без брокера (з’єднання в lifespan)
+- [ ] Імпорт `main.py` не відкриває зʼєднань (зʼєднання — у lifespan)
 - [ ] Повідомлення в БД після curl
 - [ ] Тест на fake-publisher зелений
-- [ ] Метрики доступні
+- [ ] `curl localhost:8000/metrics` повертає Prometheus-текст із лічильниками
 
 Повний прогін: `python scripts/run_lab_checks.py --module 10-backend`.

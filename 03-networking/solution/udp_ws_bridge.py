@@ -4,9 +4,9 @@
 
     python udp_ws_bridge.py --udp-port 14550 --ws-port 8765
 
-Контракт для перевірки:
+Публічний контракт (його перевіряє `checks/check_lab.py`):
 - `parse_packet(data: bytes) -> dict` — валідація JSON-пакета;
-- `TelemetryHub.register(ws)` / `broadcast(payload)` — async;
+- `TelemetryHub.register(websocket)` / `TelemetryHub.broadcast(payload)`;
 - `UdpTelemetryProtocol(hub).datagram_received(data, addr)`.
 """
 
@@ -25,65 +25,70 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(mess
 
 
 def parse_packet(data: bytes) -> dict[str, Any]:
+    """Повертає JSON-обʼєкт телеметрії, інакше піднімає ValueError."""
     if not data:
         raise ValueError('empty datagram')
     try:
-        payload = json.loads(data.decode('utf-8'))
+        packet = json.loads(data.decode('utf-8'))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ValueError(f'invalid telemetry packet: {exc}') from exc
-    if not isinstance(payload, dict):
+    if not isinstance(packet, dict):
         raise ValueError('telemetry packet must be a JSON object')
-    if 'drone_id' not in payload and 'type' not in payload:
+    if 'drone_id' not in packet and 'type' not in packet:
         raise ValueError('packet must contain drone_id or type')
-    return payload
+    return packet
 
 
 class TelemetryHub:
+    """Плоский список WebSocket-клієнтів і черга кадрів телеметрії."""
+
     def __init__(self) -> None:
-        self._clients: set[Any] = set()
-        self._lock = asyncio.Lock()
+        self.clients: list[Any] = []
 
     async def register(self, websocket: Any) -> None:
-        async with self._lock:
-            self._clients.add(websocket)
+        self.clients.append(websocket)
         try:
             await websocket.wait_closed()
         finally:
-            async with self._lock:
-                self._clients.discard(websocket)
+            self._forget(websocket)
+
+    def _forget(self, websocket: Any) -> None:
+        if websocket in self.clients:
+            self.clients.remove(websocket)
 
     async def broadcast(self, payload: dict[str, Any]) -> None:
-        async with self._lock:
-            clients = list(self._clients)
-        if not clients:
+        recipients = tuple(self.clients)
+        if not recipients:
             return
-        data = json.dumps(payload, ensure_ascii=False)
-        results = await asyncio.gather(
-            *(client.send(data) for client in clients), return_exceptions=True
+        frame = json.dumps(payload, ensure_ascii=False)
+        outcomes = await asyncio.gather(
+            *(recipient.send(frame) for recipient in recipients),
+            return_exceptions=True,
         )
-        for client, result in zip(clients, results):
-            if isinstance(result, Exception):
-                log.warning('dropping client: %s', result)
-                async with self._lock:
-                    self._clients.discard(client)
+        for recipient, outcome in zip(recipients, outcomes):
+            if isinstance(outcome, Exception):
+                log.warning('client dropped after send error: %s', outcome)
+                self._forget(recipient)
 
 
 class UdpTelemetryProtocol(asyncio.DatagramProtocol):
+    """Приймає датаграми, відсіює сміття і передає валідні пакети в хаб."""
+
     def __init__(self, hub: TelemetryHub) -> None:
         self.hub = hub
-        self.invalid_packets = 0
+        self.malformed_packets = 0
 
     def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
         try:
             payload = parse_packet(data)
         except ValueError as exc:
-            self.invalid_packets += 1
-            log.warning('invalid packet from %s: %s', addr, exc)
+            self.malformed_packets += 1
+            log.warning('malformed datagram from %s: %s', addr, exc)
             return
         asyncio.get_running_loop().create_task(self.hub.broadcast(payload))
 
     def error_received(self, exc: Exception) -> None:
-        log.warning('udp error: %s', exc)
+        log.warning('udp transport error: %s', exc)
 
 
 async def run(udp_port: int, ws_port: int) -> None:

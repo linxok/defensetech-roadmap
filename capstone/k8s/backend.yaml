@@ -13,6 +13,8 @@ spec:
       labels:
         app: backend
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: backend
           image: capstone-backend:1.0.0

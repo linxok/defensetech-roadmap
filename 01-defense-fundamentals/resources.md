@@ -5,11 +5,11 @@
 
 ## Первинні джерела
 
-- [ArduPilot Developer Docs](https://ardupilot.org/dev/index.html)як влаштований автопілот і SITL
-- [PX4 User Guide](https://docs.px4.io/main/en/)архітектура та режими PX4
-- [MAVLink Developer Guide](https://mavlink.io/en/)протокол і повідомлення
-- [QGroundControl](https://qgroundcontrol.com/)еталонна GCS
-- [Mission Planner](https://ardupilot.org/planner/)GCS для ArduPilot
+- [ArduPilot Developer Docs](https://ardupilot.org/dev/index.html) — як влаштований автопілот і SITL
+- [PX4 User Guide](https://docs.px4.io/main/en/) — архітектура та режими PX4
+- [MAVLink Developer Guide](https://mavlink.io/en/) — протокол і повідомлення
+- [QGroundControl](https://qgroundcontrol.com/) — еталонна GCS
+- [Mission Planner](https://ardupilot.org/planner/) — GCS для ArduPilot
 
 ## Додатково
 

@@ -5,11 +5,11 @@
 
 ## Первинні джерела
 
-- [Beej’s Guide to Network Programming](https://beej.us/guide/bgnet/)сокети, UDP/TCP, селект і poll
-- [RFC 6455: WebSocket](https://datatracker.ietf.org/doc/html/rfc6455)рукостискання і кадри
-- [MQTT 5.0 OASIS Standard](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html)QoS, retain, session expiry
-- [tcpdump man page](https://www.tcpdump.org/manpages/tcpdump.1.html)фільтри й розбір пакетів
-- [Wireshark User Guide](https://www.wireshark.org/docs/wsug_html_chunked/)аналіз MAVLink/JSON у реальному часі
+- [Beej’s Guide to Network Programming](https://beej.us/guide/bgnet/) — сокети, UDP/TCP, селект і poll
+- [RFC 6455: WebSocket](https://datatracker.ietf.org/doc/html/rfc6455) — рукостискання і кадри
+- [MQTT 5.0 OASIS Standard](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html) — QoS, retain, session expiry
+- [tcpdump man page](https://www.tcpdump.org/manpages/tcpdump.1.html) — фільтри й розбір пакетів
+- [Wireshark User Guide](https://www.wireshark.org/docs/wsug_html_chunked/) — аналіз MAVLink/JSON у реальному часі
 
 ## Додатково
 

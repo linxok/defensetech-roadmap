@@ -1,5 +1,8 @@
 name: CI
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main, master]
@@ -12,6 +15,7 @@ on:
 jobs:
   markdown-lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Lint Markdown
@@ -21,6 +25,7 @@ jobs:
 
   structure-and-dedup:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -28,16 +33,21 @@ jobs:
           python-version: '3.12'
       - name: Structure check
         run: python scripts/verify_structure.py
-      - name: Duplicate content check
-        run: python scripts/check_duplicates.py
+      - name: Duplicate content and code check
+        run: python scripts/check_duplicates.py --all
+      - name: Referenced files check
+        run: python scripts/check_references.py
 
   python-examples:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements*.txt
       - name: Install dependencies
         run: |
           pip install -r requirements.txt -r requirements-dev.txt
@@ -51,11 +61,14 @@ jobs:
 
   mkdocs-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-docs.txt
       - name: Install MkDocs
         run: |
           pip install -r requirements-docs.txt
@@ -66,6 +79,7 @@ jobs:
 
   capstone-compose-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     if: github.event_name != 'pull_request'
     steps:
       - uses: actions/checkout@v4

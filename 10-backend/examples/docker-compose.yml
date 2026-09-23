@@ -1,29 +1,29 @@
 services:
-  api:
-    build: ./api
-    ports:
-      - "8000:8000"
-    environment:
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_PASSWORD: example
+      POSTGRES_USER: drone
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: drone
+    ports:
+      - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U drone -d drone"]
       interval: 5s
       retries: 10
   rabbitmq:
     image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 5s
       retries: 10
   redis:
     image: redis:7
+    ports:
+      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s

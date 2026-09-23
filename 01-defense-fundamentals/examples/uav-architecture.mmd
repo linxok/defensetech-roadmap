@@ -1,9 +1,15 @@
 graph LR
-    GCS[Наземна станція<br/>QGroundControl] -->|Telemetry 433/900MHz| FC[Flight Controller<br/>Pixhawk]
-    FC -->|PWM| ESC[ESC]
-    ESC -->|3-phase| M[Motors]
-    FC -->|UART| GPS[GPS Module]
-    FC -->|I2C| IMU[IMU]
-    FC -->|USB/ETH| CAM[Camera]
-    FC -->|UART| RADIO[Telemetry Radio]
-    PM[Power Module] -->|5V| FC
+    GCS[GCS / QGroundControl] <-->|MAVLink 2 / UDP| TELEM[Telemetry Radio 433/915 MHz]
+    TELEM <-->|MAVLink 2| FC[Flight Controller: ArduPilot/PX4]
+    FC -->|PWM/DShot| ESC[ESC x4]
+    ESC -->|3-phase| MOT[Motors]
+    FC -->|UART| GPS[GPS / RTK]
+    FC -->|I2C| IMU[IMU + Baro]
+    FC -->|UART| RX[RC Receiver]
+    BATT[Battery + BMS] --> PDB[Power Distribution]
+    PDB -->|5V| FC
+    PDB -->|12V| COMP[Companion Computer: RPi/Jetson]
+    FC <-->|MAVLink / UART| COMP
+    COMP -->|CSI| CAM[Camera]
+    COMP -->|local| CV[CV/AI: detection]
+    COMP -->|RTSP / GStreamer| GCS

@@ -27,7 +27,7 @@
 
 ## Зв'язок з capstone
 
-Крок 17: підготуйте demo capstone як центральну історію для інтерв’ю — з числами і рішеннями.
+Розділ «Метрики для портфоліо» у `capstone/README.md`: підготуйте demo capstone як центральну історію для інтерв’ю — з числами і рішеннями.
 
 ## Типові помилки
 
@@ -39,9 +39,13 @@
 ## Первинні джерела
 
 - [MAVLink Developer Guide](https://mavlink.io/en/) — точність відповідей про протокол
+- [MAVLink Serialization](https://mavlink.io/en/guide/serialization.html) — кадр, CRC, signing
 - [ArduPilot Copter Docs](https://ardupilot.org/copter/) — failsafe і режими
 - [PX4 User Guide](https://docs.px4.io/main/en/) — параметри й логи
 - [ROS2 Concepts](https://docs.ros.org/en/humble/Concepts.html) — DDS і QoS
+
+## Додатково
+
 - [System Design Primer](https://github.com/donnemartin/system-design-primer) — структура system design відповіді
 
 ## Куди далі

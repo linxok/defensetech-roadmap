@@ -8,7 +8,7 @@
 Запуск:
     python3 scripts/check_duplicates.py [--min-length 120] [--all]
 
-    --all  також перевіряти дублювання коду (за замовчуванням — лише текст)
+    --all  також перевіряти код: блоки в markdown і файли коду модулів
 """
 
 from __future__ import annotations
@@ -39,6 +39,8 @@ ALLOWLIST_FILE = Path(__file__).resolve().parent / 'duplicate_allowlist.txt'
 
 MODULE_RE = re.compile(r'^\d{2}-')
 
+CODE_SUFFIXES = {'.py', '.cpp', '.hpp', '.h', '.cc', '.mjs', '.tsx', '.proto'}
+
 
 def is_module_dir(name: str) -> bool:
     return bool(MODULE_RE.match(name))
@@ -51,6 +53,18 @@ def iter_markdown() -> list[Path]:
         for name in sorted(filenames):
             if name.endswith('.md'):
                 files.append(Path(dirpath) / name)
+    return files
+
+
+def iter_code_files() -> list[Path]:
+    """Файли коду всередині модулів (для --all)."""
+    files: list[Path] = []
+    for dirpath, dirnames, filenames in os.walk(BASE):
+        dirnames[:] = sorted(d for d in dirnames if d not in EXCLUDE_DIRS and not d.startswith('.'))
+        for name in sorted(filenames):
+            path = Path(dirpath) / name
+            if path.suffix in CODE_SUFFIXES and owner_module(path) is not None:
+                files.append(path)
     return files
 
 
@@ -111,6 +125,19 @@ def main() -> int:
             seen[key].append(str(path.relative_to(BASE)))
             labels[key] = kind
 
+    if args.all:
+        for path in iter_code_files():
+            raw = path.read_text(encoding='utf-8', errors='ignore')
+            for block in re.split(r'\n\s*\n', raw):
+                block = normalize(block)
+                if len(block) < args.min_length:
+                    continue
+                if any(token in block for token in allowlist):
+                    continue
+                key = ('code', block)
+                seen[key].append(str(path.relative_to(BASE)))
+                labels[key] = 'code'
+
     violations = []
     for key, files in seen.items():
         modules = sorted({f.split('/')[0] for f in files})
@@ -118,7 +145,8 @@ def main() -> int:
             violations.append((key, files, modules))
 
     identical: dict[str, list[str]] = defaultdict(list)
-    for path in iter_markdown():
+    candidates = iter_markdown() + (iter_code_files() if args.all else [])
+    for path in candidates:
         module = owner_module(path)
         if module is None:
             continue

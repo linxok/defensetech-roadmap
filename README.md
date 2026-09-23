@@ -4,7 +4,8 @@ Open-source, hands-on course that takes a senior software engineer to a
 **Drone / Autopilot Software** role in DefenseTech: MAVLink, ArduPilot/PX4,
 ROS2, C++/Python, telemetry backends and a real capstone.
 
-Course content is written in Ukrainian; navigation, READMEs and code are English.
+Course content and module READMEs are written in Ukrainian; file names,
+code identifiers, commands and site navigation are English.
 
 ## Choose one track
 
@@ -59,7 +60,8 @@ Every module declares its status (see `CONTENT_STANDARD.md`):
 ## Capstone
 
 `capstone/` is the end-to-end system every module feeds into:
-MAVLink gateway → FastAPI backend → RabbitMQ → worker → PostgreSQL → GCS UI.
+MAVLink gateway → FastAPI backend → RabbitMQ → worker → PostgreSQL;
+the GCS UI gets live frames over WebSocket from the backend.
 
 ```bash
 cd capstone && docker compose up --build   # sim mode, no autopilot needed
@@ -77,7 +79,7 @@ the map from modules to components.
 ├── demos/                           # focused demos (CV, AI, logs)
 ├── docs/                            # setup, tools, glossary, workflow, FAQ
 ├── notes/                           # hardware buying guide, field notes
-├── scripts/                         # structure, duplicate and lab checks
+├── scripts/                         # structure, duplicate, reference and lab checks
 ├── tests/                           # pytest: structure, examples, contracts
 └── .github/workflows/ci.yml         # lint, checks, pytest, mkdocs, SITL
 ```
@@ -86,14 +88,16 @@ the map from modules to components.
 
 ```bash
 make lint              # markdownlint-cli2
-make test              # structure + duplicate check + pytest
+make test              # structure + duplicates(--all) + references + pytest
 make check             # every module's checks/ against its solution/
 make build             # mkdocs build --strict
 ```
 
 The CI runs the same gates, plus a nightly ArduPilot SITL smoke test.
-No text block may be duplicated between modules — `scripts/check_duplicates.py`
-enforces this, and shared material lives in `docs/`.
+No text or code block may be duplicated between modules —
+`scripts/check_duplicates.py --all` enforces this, and shared material
+lives in `docs/`. `scripts/check_references.py` fails on references to
+files that do not exist.
 
 ## Hardware
 

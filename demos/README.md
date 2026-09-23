@@ -6,7 +6,7 @@
 | Демо | Що показує | Куди дивитися за повною версією |
 |---|---|---|
 | `object-detection/` | YOLO через Ultralytics (інший шлях, ніж OpenCV DNN у курсі) | `12-computer-vision/` |
-| `mission-planner/` | мінімальний FastAPI CRUD для місій | `10-backend/lab.md`, `16-projects/02-mission-service...` |
+| `mission-planner/` | мінімальний FastAPI CRUD для місій | `10-backend/lab.md`, `16-projects/02-mission-service-mission-service.md` |
 
 ## Видалені як дублікати
 

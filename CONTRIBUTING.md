@@ -4,8 +4,10 @@ Thanks for improving the course. Two rules matter more than anything else:
 
 1. **Concrete over generic.** Versions, parameters, numbers, exact error
    messages. No filler paragraphs.
-2. **No duplicated text.** Shared material lives in `docs/`; modules link
-   to it. `scripts/check_duplicates.py` fails otherwise.
+2. **No duplicated text or code.** Shared material lives in `docs/`;
+   modules link to it. `scripts/check_duplicates.py --all` fails otherwise.
+3. **Referenced files exist.** If `lab.md` mentions `examples/foo.py`, the
+   file must be there; `scripts/check_references.py` enforces this.
 
 Read `CONTENT_STANDARD.md` first — it defines module statuses, required
 files and the quality bar.
@@ -25,7 +27,7 @@ Run before opening a PR:
 
 ```bash
 make lint     # markdownlint-cli2
-make test     # structure + duplicates + pytest
+make test     # structure + duplicates(--all) + references + pytest
 make check    # every module's checks/ against solution/
 make build    # mkdocs build --strict (needs requirements-docs.txt)
 ```
@@ -39,8 +41,11 @@ nightly ArduPilot SITL smoke test.
    (default: the module's `solution/`).
 2. It must exit non-zero on an empty/stub target and zero on the
    reference solution. Offline only: no SITL, Docker or network.
-3. Add the reference implementation under `NN-topic/solution/`.
-4. `tests/test_lab_checks.py` will pick it up automatically.
+3. `lab.md` must define the same contract the check requires: file names,
+   function/class names, signatures, expected values. A student who
+   follows the lab must pass the check.
+4. Add the reference implementation under `NN-topic/solution/`.
+5. `tests/test_lab_checks.py` will pick it up automatically.
 
 ## Updating a module README
 

@@ -56,7 +56,8 @@
 
 ```bash
 python scripts/verify_structure.py
-python scripts/check_duplicates.py
+python scripts/check_duplicates.py --all
+python scripts/check_references.py
 python scripts/run_lab_checks.py
 python -m pytest -q
 python scripts/prepare_docs.py

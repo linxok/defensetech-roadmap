@@ -2,107 +2,230 @@
 
 ## Мета
 
-Створити FastAPI-сервіс, який через pymavlink керує симульованим UAV: arm, takeoff, mode change, RTL.
+Створити FastAPI-сервіс `ardupilot_api.py`, який через pymavlink керує симульованим UAV (arm, takeoff, RTL) і перевіряється офлайн через інʼєкцію фейкового дрона.
 
 ## Передумови
 
-- ArduPilot SITL запущено на TCP `127.0.0.1:5762`.
-- Встановлено `fastapi`, `uvicorn`, `pymavlink`.
+- Python 3.11+ і venv:
+
+```bash
+python3 -m venv ardupilot-lab
+source ardupilot-lab/bin/activate
+pip install fastapi uvicorn pymavlink httpx
+```
+
+- ArduPilot SITL. SITL сам відкриває TCP `5762`, тому окремий `--out` для нього не потрібен (і призведе до «address already in use»):
+
+```bash
+sim_vehicle.py -v ArduCopter
+```
+
+- Якщо порт `5762` уже зайнятий іншим клієнтом, підніміть другий порт і вкажіть його через `MAVLINK_URL`:
+
+```bash
+sim_vehicle.py -v ArduCopter --out=tcpin:0.0.0.0:5763
+export MAVLINK_URL=tcp:127.0.0.1:5763
+```
+
+## Контракт
+
+Створіть у своїй робочій теці файл `ardupilot_api.py` з фабрикою `create_app(drone=None) -> FastAPI`.
+
+- `drone` — обʼєкт з async-методами `connect()`, `close()`, `arm()`, `takeoff(altitude: float)`, `rtl()`, `heartbeat() -> dict`.
+- Якщо `drone is None`, фабрика створює `MavlinkDrone` з `MAVLINK_URL` (типово `tcp:127.0.0.1:5762`, перекривається однойменною змінною середовища).
+- `lifespan` викликає `await drone.connect()` на старті та `await drone.close()` на зупинці.
+- Endpoints:
+  - `POST /arm` → 200;
+  - `POST /takeoff?alt=<float>` → 200, якщо `1 <= alt <= 120`, інакше 400;
+  - `POST /rtl` → 200;
+  - `GET /status` → JSON з heartbeat, обовʼязкове поле `custom_mode`.
+- Жодного MAVLink-зʼєднання при імпорті модуля — тільки в `lifespan`.
 
 ## Кроки
 
-### 1. Структура проєкту
-
-```text
-ardupilot-api/
-├── main.py
-├── requirements.txt
-└── README.md
-```
-
-### 2. Підключення до SITL
+### 1. Клас дрона
 
 ```python
 import asyncio
-from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
 from pymavlink import mavutil
 
-
-@asynccontextmanager
-async def lifespan(app):
-    app.state.conn = await asyncio.to_thread(
-        mavutil.mavlink_connection, 'tcp:127.0.0.1:5762'
-    )
-    await asyncio.to_thread(app.state.conn.wait_heartbeat)
-    yield
-    await asyncio.to_thread(app.state.conn.close)
+CONNECT_TIMEOUT = 15.0
 
 
-app = FastAPI(lifespan=lifespan)
+class MavlinkDrone:
+    def __init__(self, url: str) -> None:
+        self._url = url
+        self._conn = None
+
+    async def connect(self) -> None:
+        self._conn = await asyncio.wait_for(
+            asyncio.to_thread(mavutil.mavlink_connection, self._url),
+            timeout=CONNECT_TIMEOUT,
+        )
+        await asyncio.wait_for(
+            asyncio.to_thread(self._conn.wait_heartbeat),
+            timeout=CONNECT_TIMEOUT,
+        )
+
+    async def close(self) -> None:
+        if self._conn is not None:
+            await asyncio.to_thread(self._conn.close)
+            self._conn = None
+
+    async def arm(self) -> None:
+        await asyncio.to_thread(self._conn.arducopter_arm)
+
+    async def takeoff(self, altitude: float) -> None:
+        await asyncio.to_thread(self._conn.set_mode, 'GUIDED')
+        await asyncio.to_thread(
+            self._conn.mav.command_long_send,
+            self._conn.target_system, self._conn.target_component,
+            mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0,
+            0, 0, 0, 0, 0, 0, altitude,
+        )
+
+    async def rtl(self) -> None:
+        await asyncio.to_thread(self._conn.set_mode, 'RTL')
+
+    async def heartbeat(self) -> dict:
+        message = await asyncio.wait_for(
+            asyncio.to_thread(
+                self._conn.recv_match,
+                type='HEARTBEAT', blocking=True, timeout=5.0,
+            ),
+            timeout=6.0,
+        )
+        if message is None:
+            raise TimeoutError('no HEARTBEAT received')
+        return message.to_dict()
 ```
 
-### 3. Endpoints
+### 2. Фабрика з інʼєкцією
 
 ```python
-@app.post("/arm")
-async def arm():
-    conn = app.state.conn
-    await asyncio.to_thread(conn.arducopter_arm)
-    return {"status": "armed"}
+import os
+from contextlib import asynccontextmanager
 
-@app.post("/takeoff")
-async def takeoff(alt: float = 10.0):
-    conn = app.state.conn
-    await asyncio.to_thread(conn.set_mode, 'GUIDED')
-    await asyncio.to_thread(
-        conn.mav.command_long_send,
-        conn.target_system, conn.target_component,
-        mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0,
-        0, 0, 0, 0, 0, 0, alt,
-    )
-    return {"status": "takeoff", "alt": alt}
+from fastapi import FastAPI, HTTPException
 
-@app.post("/rtl")
-async def rtl():
-    conn = app.state.conn
-    await asyncio.to_thread(conn.set_mode, 'RTL')
-    return {"status": "rtl"}
+MAVLINK_URL = os.environ.get('MAVLINK_URL', 'tcp:127.0.0.1:5762')
+
+
+def create_app(drone=None) -> FastAPI:
+    @asynccontextmanager
+    async def lifespan(application: FastAPI):
+        application.state.drone = drone or MavlinkDrone(MAVLINK_URL)
+        await application.state.drone.connect()
+        try:
+            yield
+        finally:
+            await application.state.drone.close()
+
+    application = FastAPI(title='ArduPilot Control API', lifespan=lifespan)
+
+    @application.post('/arm')
+    async def arm():
+        await application.state.drone.arm()
+        return {'status': 'armed'}
+
+    @application.post('/takeoff')
+    async def takeoff(alt: float = 10.0):
+        if not 1.0 <= alt <= 120.0:
+            raise HTTPException(
+                status_code=400, detail='altitude must be in [1, 120] meters'
+            )
+        await application.state.drone.takeoff(alt)
+        return {'status': 'takeoff', 'alt': alt}
+
+    @application.post('/rtl')
+    async def rtl():
+        await application.state.drone.rtl()
+        return {'status': 'rtl'}
+
+    @application.get('/status')
+    async def status():
+        return await application.state.drone.heartbeat()
+
+    return application
+
+
+app = create_app()
 ```
 
-### 4. Запуск
+### 3. Тест інʼєкції (офлайн)
 
-```bash
-uvicorn main:app --reload
+```python
+from fastapi.testclient import TestClient
+
+
+class FakeDrone:
+    def __init__(self):
+        self.actions = []
+        self.connected = False
+        self.closed = False
+
+    async def connect(self):
+        self.connected = True
+
+    async def close(self):
+        self.closed = True
+
+    async def arm(self):
+        self.actions.append(('arm',))
+
+    async def takeoff(self, altitude):
+        self.actions.append(('takeoff', altitude))
+
+    async def rtl(self):
+        self.actions.append(('rtl',))
+
+    async def heartbeat(self):
+        return {'type': 2, 'custom_mode': 4}
+
+
+def test_command_reaches_injected_drone():
+    drone = FakeDrone()
+    with TestClient(create_app(drone)) as client:
+        assert client.post('/takeoff', params={'alt': 20}).status_code == 200
+        assert client.post('/takeoff', params={'alt': 500}).status_code == 400
+    assert drone.connected and drone.closed
+    assert ('takeoff', 20.0) in drone.actions
 ```
 
-### 5. Тестування
+### 4. Запуск із SITL
 
 ```bash
-curl -X POST http://localhost:8000/arm
-curl -X POST "http://localhost:8000/takeoff?alt=20"
-curl -X POST http://localhost:8000/rtl
+uvicorn ardupilot_api:app --port 8080
+curl -X POST http://localhost:8080/arm
+curl -X POST "http://localhost:8080/takeoff?alt=20"
+curl -X POST http://localhost:8080/rtl
+curl http://localhost:8080/status
 ```
 
 ## Перевірка
 
-Перевірте API на фейковому дроні, а потім — на SITL:
+Якщо `ardupilot_api.py` лежить поряд із цим `lab.md`, запускайте з теки модуля:
 
 ```bash
-python checks/check_lab.py --target solution
+python checks/check_lab.py --target .
 ```
 
-Очікування: arm/takeoff/rtl повертають 200, takeoff з alt=500 — 400/422, /status віддає heartbeat.
+Для файлу в іншій теці вкажіть її: `python checks/check_lab.py --target ~/ardupilot-lab`.
 
-## Розбір збоїв
-
-- З’єднання при імпорті — сервіс не стартує без SITL
-- takeoff без GUIDED/ARM ігнорується автопілотом
-- Відсутнє очікування COMMAND_ACK — помилки не видно
+Скрипт імпортує `ardupilot_api.py` з цільової теки, підставляє власний `FakeDrone`, проганяє `/arm`, `/takeoff?alt=20`, `/takeoff?alt=500`, `/rtl`, `/status` і перевіряє, що `lifespan` викликав `connect()` та `close()`, а команда `takeoff(20.0)` дійшла до дрона. Для еталона — `--target solution`.
 
 ## Очікуваний результат
 
-- Робочий REST API.
-- SITL реагує на команди.
-- Документація в README.
+- `/arm`, `/rtl`, `/takeoff?alt=20` повертають 200.
+- `/takeoff?alt=500` відхиляється з 400.
+- `/status` містить `custom_mode`.
+- MAVLink-зʼєднання створюється лише в `lifespan`.
+
+## Розбір збоїв
+
+- `OSError: [Errno 98] Address already in use` — `--out=tcpin:0.0.0.0:5762` конфліктує зі стандартним портом SITL; приберіть `--out` або відкрийте інший порт.
+- `FAIL: потрібна фабрика create_app(drone=None)` — сервіс створено через `app = FastAPI(...)` без фабрики; перепишіть під `create_app`.
+- `FAIL: lifespan має викликати connect() і close()` — забули `await` у `lifespan`.
+- `/takeoff?alt=500` повертає 200 — немає перевірки діапазону `[1, 120]`.
+- `Зʼєднання при імпорті` — `mavutil.mavlink_connection` викликається на рівні модуля, а не в `lifespan`.

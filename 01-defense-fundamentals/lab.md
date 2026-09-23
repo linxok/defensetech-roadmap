@@ -13,15 +13,20 @@
 ## Кроки
 
 1. Відкрийте `solution/uav-architecture.mmd` як орієнтир структури.
+   Діаграма — mermaid (`graph LR` або `graph TD`) зі стрілками `-->`.
 2. Намалюйте власну схему: FC, IMU, GPS, ESC/мотори, живлення,
-   телеметрія, GCS, companion computer.
+   телеметрія, GCS, companion computer. Підписи вузлів — англійськими
+   ідентифікаторами (Flight Controller, GPS, IMU, ESC, Motors,
+   Battery/Power, Telemetry Radio, GCS, Companion Computer): саме ці
+   ключові слова шукає `checks/check_lab.py`.
 3. Підпишіть кожен зв’язок протоколом: MAVLink/UART, PWM/DShot, CSI,
    RTSP, Ethernet.
 4. Додайте шар відео: камера → companion → GStreamer → GCS.
-5. Перевірте схему:
+5. Перевірте схему (еталон, потім свою теку з `.mmd`):
 
 ```bash
 python 01-defense-fundamentals/checks/check_lab.py --target 01-defense-fundamentals/solution
+python 01-defense-fundamentals/checks/check_lab.py --target <тека з вашим .mmd>
 ```
 
 6. Запустіть SITL і переконайтеся, що heartbeat доходить до GCS:

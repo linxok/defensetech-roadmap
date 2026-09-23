@@ -1,0 +1,13 @@
+# gRPC для модуля 11 (11-distributed-systems).
+#
+# Увага: grpcio-tools потребує protobuf>=5.26, тоді як mavsdk==2.0.1
+# (модуль 08) пінить protobuf<=3.20.1. В одному venv вони не
+# встановляться, тому модуль 11 використовує окреме середовище:
+#
+#   python3 -m venv venv-grpc
+#   venv-grpc/bin/pip install -r requirements-grpc.txt
+#
+# Альтернатива (якщо mavsdk не потрібен): приберіть mavsdk із
+# requirements.txt і встановіть цей файл у основний venv.
+grpcio==1.64.1
+grpcio-tools==1.64.1

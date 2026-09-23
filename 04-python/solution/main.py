@@ -2,7 +2,7 @@
 
 Запуск:
 
-    uvicorn fastapi_telemetry:app --reload
+    uvicorn main:app --reload
 
 Перевірка (офлайн): див. `../checks/check_lab.py`.
 """

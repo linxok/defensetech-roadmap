@@ -13,6 +13,8 @@ spec:
       labels:
         app: frontend
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: frontend
           image: capstone-frontend:1.0.0
@@ -20,9 +22,9 @@ spec:
             - containerPort: 3000
           env:
             - name: NEXT_PUBLIC_BACKEND_URL
-              value: "http://backend:8000"
+              value: "http://localhost:8000"
             - name: NEXT_PUBLIC_WS_URL
-              value: "ws://backend:8000/ws"
+              value: "ws://localhost:8000/ws"
           resources:
             requests:
               cpu: 100m

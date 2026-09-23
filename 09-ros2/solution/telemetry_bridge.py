@@ -17,7 +17,10 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from bridge_logic import mavlink_to_dict
+if __package__:
+    from .bridge_logic import mavlink_to_dict
+else:
+    from bridge_logic import mavlink_to_dict
 
 
 class TelemetryBridge(Node):

@@ -30,6 +30,7 @@ services:
 
   backend:
     build: ./backend
+    image: capstone-backend:1.0.0
     ports:
       - "8000:8000"
     environment:
@@ -48,6 +49,7 @@ services:
 
   worker:
     build: ./backend
+    image: capstone-backend:1.0.0
     command: python worker.py
     environment:
       DATABASE_URL: postgresql://drone:secret@postgres:5432/drone
@@ -63,6 +65,7 @@ services:
 
   gateway:
     build: ./gateway
+    image: capstone-gateway:1.0.0
     ports:
       - "14550:14550/udp"
     environment:
@@ -96,6 +99,7 @@ services:
 
   frontend:
     build: ./frontend
+    image: capstone-frontend:1.0.0
     ports:
       - "3000:3000"
     environment:

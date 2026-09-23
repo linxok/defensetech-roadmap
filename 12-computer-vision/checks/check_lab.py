@@ -81,7 +81,7 @@ def main() -> int:
 
     empty = module.postprocess(np.zeros((1, 84, 4), dtype=np.float32))
     if empty:
-        fail('на нульовому тензорі не має бути детекцій (або пропустіть цей модуль)')
+        fail('на нульовому тензорі не має бути детекцій')
 
     print('PASS: letterbox, NMS і масштабування працюють коректно')
     return 0

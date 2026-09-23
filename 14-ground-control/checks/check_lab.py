@@ -31,14 +31,15 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--target', type=Path, default=MODULE / 'solution')
     args = parser.parse_args()
+    target = args.target.resolve()
 
     node = shutil.which('node')
     if node is None:
         fail('не знайдено node — встановіть Node.js 20+')
 
-    logic = args.target / 'telemetry-format.mjs'
-    test_file = args.target / 'telemetry-format.test.mjs'
-    component = args.target / 'gcs-page.tsx'
+    logic = target / 'telemetry-format.mjs'
+    test_file = target / 'telemetry-format.test.mjs'
+    component = target / 'gcs-page.tsx'
     for path in (logic, test_file, component):
         if not path.is_file():
             fail(f'{path} не існує')
@@ -48,7 +49,7 @@ def main() -> int:
         capture_output=True,
         text=True,
         timeout=120,
-        cwd=args.target,
+        cwd=target,
         check=False,
     )
     if result.returncode != 0:

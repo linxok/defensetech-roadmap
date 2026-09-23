@@ -5,11 +5,11 @@
 
 ## Первинні джерела
 
-- [OpenCV DNN](https://docs.opencv.org/4.x/d6/d0f/group__dnn.html)readNetFromONNX, blobFromImage, NMSBoxes
-- [Ultralytics Docs](https://docs.ultralytics.com/)YOLO, export, тренування
-- [ONNX Runtime](https://onnxruntime.ai/docs/)інференс на CPU/GPU
-- [NVIDIA Jetson: TensorRT](https://developer.nvidia.com/tensorrt)квантизація і прискорення
-- [GStreamer](https://gstreamer.freedesktop.org/documentation/)RTSP, апаратне декодування
+- [OpenCV DNN](https://docs.opencv.org/4.x/d6/d0f/group__dnn.html) — readNetFromONNX, blobFromImage, NMSBoxes
+- [Ultralytics Docs](https://docs.ultralytics.com/) — YOLO, export, тренування
+- [ONNX Runtime](https://onnxruntime.ai/docs/) — інференс на CPU/GPU
+- [NVIDIA Jetson: TensorRT](https://developer.nvidia.com/tensorrt) — квантизація і прискорення
+- [GStreamer](https://gstreamer.freedesktop.org/documentation/) — RTSP, апаратне декодування
 
 ## Додатково
 

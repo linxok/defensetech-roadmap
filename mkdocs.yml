@@ -1,7 +1,7 @@
 site_name: DefenseTech Roadmap
 site_description: Open-source course from Senior Full-Stack Developer to DefenseTech Engineer
 site_author: DefenseTech Roadmap Contributors
-site_url: https://your-username.github.io/defensetech-roadmap/
+site_url: https://linxok.github.io/defensetech-roadmap/
 
 docs_dir: docs
 
@@ -16,6 +16,15 @@ exclude_docs: |
   *.pyc
   Makefile
   requirements.txt
+  requirements-dev.txt
+  requirements-docs.txt
+  requirements-optional.txt
+  requirements-grpc.txt
+  pytest.ini
+  Dockerfile
+  Dockerfile.*
+  docker-compose.yml
+  package-lock.json
   mkdocs.yml
   LICENSE
   .gitignore
@@ -105,4 +114,4 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/your-username/defensetech-roadmap
+      link: https://github.com/linxok/defensetech-roadmap

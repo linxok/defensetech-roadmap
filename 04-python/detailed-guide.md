@@ -4,7 +4,7 @@
 
 ## Порядок проходження
 
-1. Запустіть `examples/fastapi_telemetry.py` і перевірте `/docs`.
+1. Запустіть `uvicorn fastapi_telemetry:app --reload` з теки `examples/` і перевірте `/docs`.
 2. Відправте валідний POST і подивіться код відповіді 201.
 3. Відправте battery=150 і подивіться на структуру 422.
 4. Запустіть `python checks/check_lab.py --target solution`.

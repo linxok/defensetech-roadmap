@@ -22,10 +22,11 @@ python -c "import fastapi, pymavlink; print('deps ok')"
 docker run --rm hello-world
 ```
 
-5. Запустіть перевірку плану:
+5. Запустіть перевірку плану (еталон, потім ваша тека з `plan.md`):
 
 ```bash
 python 00-introduction/checks/check_lab.py --target 00-introduction/solution
+python 00-introduction/checks/check_lab.py --target <тека з вашим plan.md>
 ```
 
 ## Очікуваний результат

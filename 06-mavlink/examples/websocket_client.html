@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MAVLink telemetry</title>
+  <style>
+    body { font-family: ui-monospace, monospace; margin: 1.5rem; }
+    #status { font-weight: bold; }
+    #log { white-space: pre-wrap; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h1>MAVLink telemetry</h1>
+  <p id="status">connecting…</p>
+  <pre id="log"></pre>
+
+  <script>
+    const statusNode = document.getElementById('status');
+    const logNode = document.getElementById('log');
+
+    function append(payload) {
+      const stamp = payload.ts ? new Date(payload.ts) : new Date();
+      const line = stamp.toLocaleTimeString('uk-UA') + '  ' + JSON.stringify(payload);
+      logNode.textContent = line + '\n' + logNode.textContent;
+    }
+
+    function connect() {
+      const socket = new WebSocket('ws://localhost:8765');
+
+      socket.onopen = () => {
+        statusNode.textContent = 'connected to ws://localhost:8765';
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          append(JSON.parse(event.data));
+        } catch (error) {
+          append({ raw: event.data, error: String(error) });
+        }
+      };
+
+      socket.onclose = () => {
+        statusNode.textContent = 'disconnected — retry in 3 s';
+        setTimeout(connect, 3000);
+      };
+
+      socket.onerror = () => socket.close();
+    }
+
+    connect();
+  </script>
+</body>
+</html>

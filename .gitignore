@@ -39,3 +39,16 @@ site/
 
 # Test artifacts
 .pytest_cache/
+.coverage
+
+# Python tooling
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+
+# Node
+node_modules/
+
+# Agent Manager / локальний стан інструментів
+.kilo/
