@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import asyncio
 import importlib.util
 import json
@@ -147,9 +148,38 @@ def main() -> int:
         fail('broadcast надіслав некоректний JSON')
 
     source = path.read_text(encoding='utf-8')
-    if 'asyncio.wait(' in source:
-        fail('використано asyncio.wait замість asyncio.gather')
-    if 'recv_match' in source and 'to_thread' not in source:
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as exc:
+        fail(f'mavlink_gateway.py не парситься: {exc}')
+
+    for call in ast.walk(tree):
+        if (
+            isinstance(call, ast.Call)
+            and isinstance(call.func, ast.Attribute)
+            and call.func.attr == 'wait'
+            and isinstance(call.func.value, ast.Name)
+            and call.func.value.id == 'asyncio'
+        ):
+            fail('використано asyncio.wait — заборонено, використовуйте asyncio.gather')
+
+    recv_calls = {
+        id(node)
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Attribute) and node.attr == 'recv_match'
+    }
+    if not recv_calls:
+        fail('gateway має читати кадри через recv_match')
+    wrapped = {
+        id(node)
+        for call in ast.walk(tree)
+        if isinstance(call, ast.Call)
+        and isinstance(call.func, ast.Attribute)
+        and call.func.attr == 'to_thread'
+        for node in ast.walk(call)
+        if isinstance(node, ast.Attribute) and node.attr == 'recv_match'
+    }
+    if recv_calls - wrapped:
         fail('блокуючий recv_match викликається без asyncio.to_thread')
 
     print('PASS: gateway конвертує MAVLink у JSON і коректно розсилає клієнтам')

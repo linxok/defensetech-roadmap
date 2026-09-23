@@ -50,6 +50,9 @@ def main() -> int:
             fail(f'в unit немає `{directive}`')
     if 'User=root' in unit_text:
         fail('сервіс не має працювати від root')
+    exec_match = re.search(r'ExecStart=(\S+)', unit_text)
+    if exec_match is None or not exec_match.group(1).endswith('.sh'):
+        fail('ExecStart має запускати .sh-скрипт читання serial')
 
     script_text = script.read_text(encoding='utf-8')
     if not script_text.startswith('#!/'):
@@ -58,14 +61,18 @@ def main() -> int:
         fail(f'скрипт {script.name} не має права на виконання (chmod +x)')
     if not re.search(r'stty|serial|pyserial|python', script_text):
         fail('скрипт не схожий на роботу з serial-портом')
+    if '/dev/' not in script_text:
+        fail('скрипт має працювати з пристроєм у /dev/')
 
     rules_text = rules.read_text(encoding='utf-8')
     if 'SUBSYSTEM=="tty"' not in rules_text:
         fail('udev-правило має стосуватися SUBSYSTEM=="tty"')
     if 'SYMLINK' not in rules_text:
         fail('udev-правило має створювати стабільний SYMLINK')
-    if 'GROUP="dialout"' not in rules_text and 'MODE=' not in rules_text:
-        fail('udev-правило має задавати GROUP або MODE для доступу')
+    if 'GROUP="dialout"' not in rules_text:
+        fail('udev-правило має задавати GROUP="dialout"')
+    if 'MODE="0660"' not in rules_text:
+        fail('udev-правило має задавати MODE="0660" (не 0666)')
 
     print('PASS: unit, serial-скрипт і udev-правило коректні')
     return 0

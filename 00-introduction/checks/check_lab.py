@@ -26,6 +26,21 @@ def fail(message: str) -> None:
     raise SystemExit(1)
 
 
+def milestone_rows(text: str) -> list[list[str]]:
+    """Рядки таблиці мілстоунів без заголовка й розділювача."""
+    rows: list[list[str]] = []
+    for line in text.splitlines():
+        if not line.startswith('|') or line.count('|') < 5:
+            continue
+        cells = [cell.strip() for cell in line.strip('|').split('|')]
+        if all(re.fullmatch(r'[-: ]*', cell) for cell in cells):
+            continue
+        if any('критерій завершення' in cell.lower() or cell.lower() == 'модулі' for cell in cells):
+            continue
+        rows.append(cells)
+    return rows
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--target', type=Path, default=MODULE / 'solution')
@@ -41,12 +56,25 @@ def main() -> int:
         if section not in lowered:
             fail(f'у плані немає розділу про «{section}»')
 
-    rows = [line for line in text.splitlines() if line.count('|') >= 3 and line.startswith('|')]
-    if len(rows) < 5:  # заголовок + розділювач + мінімум 3 мілстоуни
-        fail(f'очікували таблицю мілстоунів із 3+ рядками, знайдено {len(rows)} рядків')
+    milestones = milestone_rows(text)
+    if len(milestones) < 8:
+        fail(f'очікували 8+ мілстоунів, знайшли {len(milestones)}')
 
-    if not re.search(r'\d+\s*(год|годин|h)\b', lowered):
-        fail('немає тижневого бюджету годин у числах')
+    without_horizon = [row for row in milestones if not re.search(r'\d', ' '.join(row[:2]))]
+    if without_horizon:
+        fail('кожен мілстоун має містити тижні або дату в перших колонках')
+
+    with_criterion = sum(
+        1
+        for row in milestones
+        if re.search(r'(`|checks/|\.py\b|PASS|\bdocker\b|ACK)', ' '.join(row[2:]))
+    )
+    if with_criterion < 5:
+        fail(f'лише {with_criterion} мілстоунів мають бінарний критерій (команда/артефакт); треба 5+')
+
+    hours = set(re.findall(r'(\d+)\s*(?:год|годин)', lowered))
+    if len(hours) < 2:
+        fail('немає тижневого бюджету годин: потрібні щонайменше два числа з «год/годин»')
 
     print('PASS: план містить ціль, трек, бюджет, мілстоуни та метрики')
     return 0

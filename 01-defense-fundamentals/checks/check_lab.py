@@ -64,7 +64,11 @@ def main() -> int:
     if edges < 6:
         fail(f'звʼязків між підсистемами замало: {edges} (очікували 6+)')
 
-    print(f'PASS: архітектура містить усі підсистеми ({edges} звʼязків)')
+    nodes = set(re.findall(r'([A-Za-z_][A-Za-z0-9_]*)\s*[\[({]', text))
+    if len(nodes) < 10:
+        fail(f'вузлів на схемі замало: {len(nodes)} (очікували 10+)')
+
+    print(f'PASS: архітектура містить усі підсистеми ({len(nodes)} вузлів, {edges} звʼязків)')
     return 0
 
 

@@ -11,6 +11,7 @@ ROS2 у CI немає, тому перевіряється чиста логік
 from __future__ import annotations
 
 import argparse
+import ast
 import importlib.util
 import sys
 from pathlib import Path
@@ -79,9 +80,36 @@ def main() -> int:
     if not node_path.is_file():
         fail('немає `telemetry_bridge.py`')
     source = node_path.read_text(encoding='utf-8')
-    for pattern in ('create_publisher', 'drone/telemetry', 'destroy_node', 'rclpy.spin'):
-        if pattern not in source:
-            fail(f'у вузлі немає `{pattern}`')
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as exc:
+        fail(f'telemetry_bridge.py не парситься: {exc}')
+
+    called = {
+        node.func.attr
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+    }
+    missing = {'init', 'create_publisher', 'destroy_node', 'spin'} - called
+    if missing:
+        fail(f'у вузлі немає викликів: {", ".join(sorted(missing))}')
+
+    if "drone/telemetry" not in source:
+        fail('вузол має публікувати в топік `drone/telemetry`')
+
+    def contains_call(nodes, name: str) -> bool:
+        return any(
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == name
+            for node in ast.walk(ast.Module(body=list(nodes), type_ignores=[]))
+        )
+
+    if not any(
+        isinstance(node, ast.Try) and contains_call(node.finalbody, 'destroy_node')
+        for node in ast.walk(tree)
+    ):
+        fail('destroy_node має викликатися у finally (коректне завершення вузла)')
 
     print('PASS: конвертація тестується без ROS2, вузол має потрібну структуру')
     return 0

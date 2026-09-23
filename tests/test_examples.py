@@ -13,13 +13,17 @@ BASE = Path(__file__).resolve().parent.parent
 
 IMPORT_SMOKE = (
     ('04-python/examples/fastapi_telemetry.py', ('app',)),
+    ('04-python/examples/telemetry_client.py', ('post_telemetry',)),
     ('10-backend/examples/telemetry_pipeline.py', ('app', 'create_app')),
     ('10-backend/examples/telemetry_worker.py', ('store', 'on_message', 'main')),
     ('06-mavlink/examples/mavlink_gateway.py', ('mavlink_to_telemetry', 'TelemetryHub')),
     ('07-ardupilot/examples/ardupilot_api.py', ('app', 'create_app')),
     ('08-px4/examples/ulog_summary.py', ('main',)),
     ('12-computer-vision/examples/yolo_opencv.py', ('postprocess', 'letterbox')),
+    ('12-computer-vision/examples/track_objects.py', ('main',)),
     ('13-ai/examples/mission_prompt.py', ('Mission', 'offline_mission')),
+    ('13-ai/examples/rag_simple.py', ('retrieve',)),
+    ('15-devops/examples/main.py', ('app',)),
     ('capstone/backend/main.py', ('app', 'create_app')),
     ('capstone/backend/worker.py', ('store', 'on_message')),
     ('capstone/gateway/gateway.py', ('mavlink_to_telemetry',)),

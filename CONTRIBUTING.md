@@ -39,13 +39,16 @@ nightly ArduPilot SITL smoke test.
 
 1. Create `NN-topic/checks/check_lab.py` with a `--target` argument
    (default: the module's `solution/`).
-2. It must exit non-zero on an empty/stub target and zero on the
-   reference solution. Offline only: no SITL, Docker or network.
-3. `lab.md` must define the same contract the check requires: file names,
+2. It must exit non-zero on an empty target and on a structured stub
+   (solution structure with empty files). Offline only: no SITL, Docker
+   or network.
+3. Check behavior, not substrings: comments and string literals must not
+   satisfy a check. Prefer imports, AST and real execution.
+4. `lab.md` must define the same contract the check requires: file names,
    function/class names, signatures, expected values. A student who
    follows the lab must pass the check.
-4. Add the reference implementation under `NN-topic/solution/`.
-5. `tests/test_lab_checks.py` will pick it up automatically.
+5. Add the reference implementation under `NN-topic/solution/`.
+6. `tests/test_lab_checks.py` will pick it up automatically.
 
 ## Updating a module README
 
