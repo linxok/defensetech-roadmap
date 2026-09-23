@@ -1,5 +1,5 @@
-# Приклади коду
+# Приклади 13: AI у DefenseTech
 
-Тут зібрані приклади коду для модуля.
+У `examples/` — mission prompt і простий RAG. Еталон із валідацією: `solution/mission_prompt.py`.
 
-Запускайте їх у відповідному середовищі (Python venv, ROS2 workspace, Next.js проєкт тощо).
+Запуск: `pip install -r requirements.txt` (venv репозиторію).

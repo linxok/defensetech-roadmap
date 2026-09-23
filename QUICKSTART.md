@@ -1,54 +1,70 @@
 # Quickstart
 
-Швидкий старт для курсу **DefenseTech Roadmap**.
+Швидкий старт курсу **DefenseTech Roadmap**. Рекомендований трек —
+Drone / Autopilot Software.
 
-## 1. Клонування та огляд
+## 1. Клонування
 
 ```bash
 git clone https://github.com/linxok/defensetech-roadmap.git
 cd defensetech-roadmap
-ls
 ```
 
-## 2. Налаштування середовища
+## 2. Середовище
 
-Детальна інструкція в `docs/setup.md`. Коротко:
+Деталі — у `docs/setup.md`. Коротко:
 
 ```bash
 sudo apt update
-sudo apt install -y git build-essential cmake python3-pip python3-venv docker.io docker-compose
+sudo apt install -y git build-essential cmake python3-pip python3-venv docker.io
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
+```
+
+Перевірка, що все на місці:
+
+```bash
+python scripts/verify_structure.py
+python scripts/run_lab_checks.py
 ```
 
 ## 3. Перший модуль
 
-Почніть з `00-introduction/`:
-
 ```bash
 cat 00-introduction/README.md
 cat 00-introduction/lab.md
-cat 00-introduction/checklist.md
+python 00-introduction/checks/check_lab.py --target 00-introduction/solution
 ```
 
-## 4. Наступні модулі
+Заповніть `plan.md` за еталоном `00-introduction/solution/plan-example.md`.
 
-Проходьте модулі по порядку. Виконуйте лабораторні, практику, домашні завдання і мініпроєкти.
+## 4. Порядок проходження
 
-## 5. Портфоліо
+1. Профільні модулі 04–09 — глибоко, з `checks/` і мініпроєктами.
+2. Решта — оглядово, на рівні README і checklist.
+3. Після кожного модуля перевіряйте `checklist.md` і оновлюйте capstone.
 
-Коли пройдете 5–7 модулів, розпочніть портфоліо-проєкти з `16-projects/`.
-
-## 6. Публікація
-
-Ведіть власний репозиторій з нотатками і проєктами. Закріпіть найкращі роботи на GitHub.
-
-## 7. Сайт курсу
+## 5. Capstone
 
 ```bash
-pip install mkdocs-material
-mkdocs serve
+cd capstone
+docker compose up --build
 ```
 
-Відкрийте http://localhost:8000.
+Відкрийте http://localhost:3000 (UI), http://localhost:8000/docs (API),
+http://localhost:15672 (RabbitMQ). Режим справжнього SITL:
+`COMPOSE_PROFILES=sitl docker compose up --build`.
+
+## 6. Сайт курсу
+
+```bash
+pip install -r requirements-docs.txt
+python scripts/prepare_docs.py
+mkdocs serve -f .mkdocs-build/mkdocs.yml
+```
+
+## 7. Публікація
+
+Ведіть власний репозиторій-трекер: план, нотатки, лабораторні.
+Один публічний артефакт на тиждень — мінімум. Портфоліо — у `16-projects/`.

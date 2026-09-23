@@ -1,4 +1,0 @@
-fastapi
-uvicorn[standard]
-pika
-psycopg2-binary

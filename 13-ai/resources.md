@@ -1,13 +1,19 @@
-# Ресурси 13
+# Ресурси 13: AI у DefenseTech
 
-## Документація
+Головний список джерел модуля. Первинні джерела — обов'язкові,
+решта — за потреби.
 
-- OpenAI API docs
-- LangChain docs
-- pyulog docs
-- MCP spec
+## Первинні джерела
+
+- [OpenAI API reference](https://platform.openai.com/docs/api-reference)chat completions, JSON mode, timeout
+- [Pydantic validators](https://docs.pydantic.dev/latest/concepts/validators/)валідація відповідей
+- [LangChain docs](https://python.langchain.com/docs/get_started/introduction)RAG-компоненти
+- [RAG paper](https://arxiv.org/abs/2005.11401)retrieval-augmented generation
+- [ArduPilot log analysis](https://ardupilot.org/copter/docs/common-downloading-and-analyzing-logs.html)метрики польоту
 
 ## Додатково
 
-- Пошукайте актуальні репозиторії на GitHub за ключовими словами модуля.
-- Долучайтеся до спільнот і ставте запитання.
+- Flight Review — інтерпретація логів
+- Practical Deep Learning for Coders — базис ML
+
+Принцип: якщо переказ суперечить специфікації — правда в специфікації.

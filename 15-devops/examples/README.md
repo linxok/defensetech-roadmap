@@ -1,5 +1,5 @@
-# Приклади коду
+# Приклади 15: DevOps для флоту
 
-Тут зібрані приклади коду для модуля.
+У `examples/` — Dockerfile, compose, k8s і Prometheus. Еталон за чеклістом: `solution/`.
 
-Запускайте їх у відповідному середовищі (Python venv, ROS2 workspace, Next.js проєкт тощо).
+Запуск: `pip install -r requirements.txt` (venv репозиторію).

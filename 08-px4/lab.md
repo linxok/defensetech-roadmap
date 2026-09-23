@@ -61,6 +61,22 @@ python px4_param.py --get MPC_XY_P
 python px4_param.py --set MPC_XY_P --value 0.8
 ```
 
+## Перевірка
+
+Спочатку перевірте чисті функції та CLI, потім — SITL:
+
+```bash
+python checks/check_lab.py --target solution
+```
+
+Для SITL: `px4_param.py get MPC_XY_VEL_MAX`, потім `set` і повторний `get`.
+
+## Розбір збоїв
+
+- `no PX4 connection` — SITL не запущено або інша адреса ніж udp://:14540
+- Параметр int зіпсовано через set_param_float
+- pyulog падає на битому файлі — перевірте, що лог докачано
+
 ## Очікуваний результат
 
 - CLI для управління параметрами PX4.

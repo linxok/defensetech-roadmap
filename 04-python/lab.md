@@ -56,6 +56,22 @@ uvicorn main:app --reload
 curl -X POST http://localhost:8000/telemetry -H "Content-Type: application/json" -d '{"drone_id":"001","ts":"2024-01-01T00:00:00","lat":50.45,"lon":30.52,"alt":100,"battery":87}'
 ```
 
+## Перевірка
+
+Запустіть сервіс і перевірте коди відповідей:
+
+```bash
+python checks/check_lab.py --target solution
+```
+
+Очікування: 201 на валідний POST, 422 на battery=150, 404 на невідомий дрон.
+
+## Розбір збоїв
+
+- 200 замість 201/422 — клієнт не розрізняє стани
+- Модель без меж приймає lat=999
+- Глобальний dict без lock при кількох воркерах
+
 ## Очікуваний результат
 
 - FastAPI сервіс.

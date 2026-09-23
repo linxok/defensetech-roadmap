@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package telemetry.v1;
+
+// Кадр телеметрії від одного дрона.
+message TelemetryFrame {
+  string drone_id = 1;
+  int64 timestamp_ms = 2;
+  double lat = 3;
+  double lon = 4;
+  double alt = 5;
+  int32 battery = 6;
+}
+
+message DroneRequest {
+  string drone_id = 1;
+}
+
+message Ack {
+  bool accepted = 1;
+  int32 received = 2;
+}
+
+service Telemetry {
+  // Стрімінг кадрів від дрона в сервіс.
+  rpc StreamTelemetry(stream TelemetryFrame) returns (Ack);
+  // Останній відомий кадр дрона.
+  rpc GetLast(DroneRequest) returns (TelemetryFrame);
+}

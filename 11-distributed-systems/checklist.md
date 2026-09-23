@@ -1,7 +1,12 @@
-# Чекліст 11
+# Чекліст 11: Розподілені системи
 
-- [ ] Використав gRPC/ZeroMQ
-- [ ] Розумію DDS
-- [ ] Додав retry/circuit breaker
-- [ ] Знаю service mesh basics
-- [ ] Проєктував distributed system
+Кожен пункт — команда або артефакт з об'єктивним результатом.
+Самозвіт «зрозумів» не зараховується.
+
+- [ ] `python checks/check_lab.py --target solution` проходить
+- [ ] proto компілюється, сервіс і RPC на місці
+- [ ] Клієнт має deadline
+- [ ] Таблиця порівняння транспортів готова
+- [ ] Схема партиціювання обґрунтована числами
+
+Повний прогін: `python scripts/run_lab_checks.py --module 11-distributed-systems`.

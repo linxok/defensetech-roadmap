@@ -1,7 +1,7 @@
-# Cheat Sheet 17
+# Cheat Sheet 17: Підготовка до співбесіди
 
-- CV: projects, results, links.
-- Questions: system design, networking, domain.
-- Practice: 5 system designs.
-- Behavioral: STAR method.
-- Portfolio: GitHub pinned repos.
+- Структура відповіді: суть → механізм → приклад → обмеження
+- STAR: Situation, Task, Action, Result
+- System design: вимоги → оцінки → схема → вузькі місця → відмови
+- Пауза 3 секунди перед відповіддю — нормально
+- «Не знаю» + план дізнатися — сильніше за вигадку

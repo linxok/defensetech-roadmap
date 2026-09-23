@@ -1,14 +1,19 @@
-# Ресурси 10
+# Ресурси 10: Backend для телеметрії
 
-## Документація
+Головний список джерел модуля. Первинні джерела — обов'язкові,
+решта — за потреби.
 
-- FastAPI docs
-- PostgreSQL docs
-- Redis docs
-- RabbitMQ tutorials
-- Kafka docs
+## Первинні джерела
+
+- [RabbitMQ: AMQP 0-9-1](https://www.rabbitmq.com/tutorials/amqp-concepts)черги, ack, prefetch, durable
+- [PostgreSQL docs](https://www.postgresql.org/docs/)індекси, ON CONFLICT, партиції
+- [FastAPI: lifespan](https://fastapi.tiangolo.com/advanced/events/)керування з’єднаннями
+- [Redis docs](https://redis.io/docs/latest/)кеш останнього стану
+- [Alembic](https://alembic.sqlalchemy.org/en/latest/)міграції схеми
 
 ## Додатково
 
-- Пошукайте актуальні репозиторії на GitHub за ключовими словами модуля.
-- Долучайтеся до спільнот і ставте запитання.
+- Designing Data-Intensive Applications — розділи 1, 3
+- Prometheus docs — метрики для сервісів
+
+Принцип: якщо переказ суперечить специфікації — правда в специфікації.

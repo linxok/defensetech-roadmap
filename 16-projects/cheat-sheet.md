@@ -1,7 +1,7 @@
-# Cheat Sheet 16
+# Cheat Sheet 16: Портфоліо-проєкти
 
-- 10 projects: telemetry, mission, fleet, GCS, gateway, AI, video, logs, agent, dashboard.
-- Start with telemetry + gateway.
-- Add GCS for end-to-end.
-- Add AI for ML portfolio.
-- README, Docker, CI/CD.
+- `cp -r 16-projects/solution/starter-template ~/my-project`
+- `gh repo create my-project --public --source=. --push`
+- `git log --oneline --graph` — читабельна історія
+- `gh release create v1.0.0` — тег релізу
+- `ffmpeg -f x11grab -i :0 -t 120 demo.mp4` — запис демо

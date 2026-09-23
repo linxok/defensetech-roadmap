@@ -1,0 +1,2 @@
+# Стабільний шлях для serial-адаптера ArduPilot (FTDI / CH340)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE="0660", GROUP="dialout", SYMLINK+="ttyFC"

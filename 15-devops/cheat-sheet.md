@@ -1,10 +1,7 @@
-# Cheat Sheet 15
+# Cheat Sheet 15: DevOps для флоту
 
-- Dockerfile: build image.
-- docker-compose: local stack.
-- Kubernetes: orchestration.
-- Helm: K8s packages.
-- GitHub Actions: CI/CD.
-- Prometheus: metrics.
-- Grafana: dashboards.
-- Loki: logs.
+- `docker build -t app:1.0.0 .`
+- `docker compose up --build -d`
+- `kubectl apply -f k8s-deployment.yaml`
+- `kubectl rollout undo deployment/telemetry-api`
+- `docker run --rm trivy image app:1.0.0`

@@ -1,5 +1,5 @@
-# Приклади коду
+# Приклади 01: Основи DefenseTech і архітектура UAV
 
-Тут зібрані приклади коду для модуля.
+У `examples/` є mermaid-схема UAV. Відкрийте її в mermaid live editor і порівняйте зі своєю.
 
-Запускайте їх у відповідному середовищі (Python venv, ROS2 workspace, Next.js проєкт тощо).
+Запуск: `pip install -r requirements.txt` (venv репозиторію).

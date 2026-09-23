@@ -13,7 +13,7 @@
 
 ### 1. Структура
 
-```
+```text
 include/
   message_queue.hpp
   mavlink_parser.hpp
@@ -61,6 +61,22 @@ cmake ..
 make
 ./parser
 ```
+
+## Перевірка
+
+Зберіть і проженіть обидві програми:
+
+```bash
+python checks/check_lab.py --target solution
+```
+
+Thread pool має вивести `sum_of_squares=204`, parser_test — пройти known-answer CRC-перевірку на фреймі з pymavlink.
+
+## Розбір збоїв
+
+- Забутій `-pthread` — лінкувальна помилка
+- CRC рахується від magic-байта — тест не проходить
+- Пул без `stopping_` зависає на виході
 
 ## Очікуваний результат
 

@@ -3,6 +3,26 @@ site_description: Open-source course from Senior Full-Stack Developer to Defense
 site_author: DefenseTech Roadmap Contributors
 site_url: https://your-username.github.io/defensetech-roadmap/
 
+docs_dir: docs
+
+exclude_docs: |
+  .github/
+  .kilo/
+  .git/
+  venv/
+  site/
+  node_modules/
+  __pycache__/
+  *.pyc
+  Makefile
+  requirements.txt
+  mkdocs.yml
+  LICENSE
+  .gitignore
+  .markdownlint-cli2.jsonc
+  scripts/
+  tests/
+
 theme:
   name: material
   palette:
@@ -48,6 +68,9 @@ markdown_extensions:
 nav:
   - Home: README.md
   - Roadmap: ROADMAP.md
+  - Quickstart: QUICKSTART.md
+  - Study schedule: STUDY_SCHEDULE.md
+  - Content standard: CONTENT_STANDARD.md
   - Contributing: CONTRIBUTING.md
   - Modules:
       - 00 Introduction: 00-introduction/README.md
@@ -68,11 +91,16 @@ nav:
       - 15 DevOps: 15-devops/README.md
       - 16 Projects: 16-projects/README.md
       - 17 Interview: 17-interview/README.md
+  - Capstone:
+      - Overview: capstone/README.md
   - Docs:
+      - How to learn: docs/learning-workflow.md
       - Setup: docs/setup.md
       - Tools: docs/tools.md
       - Hardware: docs/hardware-recommendations.md
       - Glossary: docs/glossary.md
+      - FAQ: docs/faq.md
+      - Templates: docs/templates.md
 
 extra:
   social:

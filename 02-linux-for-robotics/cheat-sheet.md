@@ -1,8 +1,8 @@
-# Cheat Sheet 02
+# Cheat Sheet 02: Linux для робототехніки
 
-- systemd: systemctl, journalctl.
-- udev: /etc/udev/rules.d/.
-- serial: /dev/ttyUSB*, pyserial.
-- CAN: ip link set can0 up.
-- tcpdump: -i any -nn -s0 -w file.pcap.
-- permissions: chmod, groups.
+- `systemctl daemon-reload && systemctl restart drone-telemetry`
+- `journalctl -u drone-telemetry -f --since "1 hour ago"`
+- `udevadm control --reload-rules && udevadm trigger`
+- `udevadm info --attribute-walk --name=/dev/ttyUSB0`
+- `stty -F /dev/ttyUSB0 57600 cs8 -cstopb -parenb raw -echo`
+- `ip link set can0 up type can bitrate 500000`

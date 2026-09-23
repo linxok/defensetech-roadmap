@@ -1,0 +1,16 @@
+graph TD
+    GCS[GCS / QGroundControl] <-->|MAVLink 2 / UDP| TELEM[Telemetry Radio]
+    TELEM <-->|MAVLink 2| FC[Flight Controller: ArduPilot/PX4]
+    FC --> IMU[IMU + Baro]
+    FC --> MAG[Compass]
+    FC --> GPS[GPS / RTK]
+    FC --> ESC[ESC x4]
+    ESC --> MOT[Motors]
+    FC --> RX[RC Receiver]
+    FC <-->|UART| COMP[Companion Computer: RPi/Jetson]
+    COMP --> CAM[Camera]
+    COMP --> CV[CV/AI: detection]
+    BATT[LiPo Battery + BMS] --> PDB[Power Distribution]
+    PDB --> ESC
+    PDB --> FC
+    PDB --> COMP

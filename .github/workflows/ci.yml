@@ -5,6 +5,9 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
 
 jobs:
   markdown-lint:
@@ -16,19 +19,35 @@ jobs:
         with:
           globs: '**/*.md'
 
+  structure-and-dedup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Structure check
+        run: python scripts/verify_structure.py
+      - name: Duplicate content check
+        run: python scripts/check_duplicates.py
+
   python-examples:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install -r requirements.txt -r requirements-dev.txt
       - name: Syntax check Python examples
         run: |
-          find . -name '*.py' -type f -exec python -m py_compile {} +
+          find . -name '*.py' -type f \
+            -not -path './.kilo/*' -not -path './venv/*' -not -path './.mkdocs-build/*' \
+            -exec python -m py_compile {} +
+      - name: Run tests (examples, contracts, lab checks)
+        run: python -m pytest -q
 
   mkdocs-build:
     runs-on: ubuntu-latest
@@ -36,10 +55,44 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - name: Install MkDocs
         run: |
-          pip install mkdocs-material pymdown-extensions
+          pip install -r requirements-docs.txt
       - name: Build site
         run: |
-          mkdocs build --strict
+          python scripts/prepare_docs.py
+          mkdocs build --strict -f .mkdocs-build/mkdocs.yml
+
+  capstone-compose-build:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build capstone images
+        run: docker compose -f capstone/docker-compose.yml build
+
+  sitl-smoke:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pymavlink
+        run: pip install pymavlink==2.4.41
+      - name: Start ArduPilot SITL
+        run: |
+          docker run -d -it --name sitl --network host \
+            -e SITL_UDP_OUTPUT_ADDRESS=udp:127.0.0.1:14555 \
+            radarku/ardupilot-sitl:eff32c1f98152ac3d1dc09a1e475733b73ce569f
+      - name: Wait for heartbeat
+        run: python scripts/sitl_smoke.py --source udp:127.0.0.1:14555 --timeout 180
+      - name: SITL logs on failure
+        if: failure()
+        run: docker logs --tail 100 sitl
+      - name: Stop SITL
+        if: always()
+        run: docker rm -f sitl

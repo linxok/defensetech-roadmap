@@ -1,5 +1,5 @@
-# Приклади коду
+# Приклади 10: Backend для телеметрії
 
-Тут зібрані приклади коду для модуля.
+У `examples/` — pipeline, воркер і compose. Еталон: `solution/main.py`.
 
-Запускайте їх у відповідному середовищі (Python venv, ROS2 workspace, Next.js проєкт тощо).
+Запуск: `pip install -r requirements.txt` (venv репозиторію).

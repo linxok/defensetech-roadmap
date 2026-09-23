@@ -1,18 +1,19 @@
-# Ресурси 01
+# Ресурси 01: Основи DefenseTech і архітектура UAV
 
-## Документація
+Головний список джерел модуля. Первинні джерела — обов'язкові,
+решта — за потреби.
 
-- ArduPilot: https://ardupilot.org/
-- PX4: https://docs.px4.io/
-- MAVLink: https://mavlink.io/
-- QGroundControl: https://docs.qgroundcontrol.com/
+## Первинні джерела
 
-## Книги
-
-- Small Unmanned Aircraft: Theory and Practice — Randal Beard, Timothy McLain
-- Make: Drones — David McGriffy
+- [ArduPilot Developer Docs](https://ardupilot.org/dev/index.html)як влаштований автопілот і SITL
+- [PX4 User Guide](https://docs.px4.io/main/en/)архітектура та режими PX4
+- [MAVLink Developer Guide](https://mavlink.io/en/)протокол і повідомлення
+- [QGroundControl](https://qgroundcontrol.com/)еталонна GCS
+- [Mission Planner](https://ardupilot.org/planner/)GCS для ArduPilot
 
 ## Додатково
 
-- Пошукайте актуальні репозиторії на GitHub за ключовими словами модуля.
-- Долучайтеся до спільнот і ставте запитання.
+- Make: Drones — David McGriffy (введення в залізо)
+- ArduPilot Discuss — розділ Copter
+
+Принцип: якщо переказ суперечить специфікації — правда в специфікації.

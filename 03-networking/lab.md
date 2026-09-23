@@ -39,18 +39,24 @@ class UDPProtocol:
 ### 2. WebSocket server
 
 ```python
+import asyncio
+import json
 import websockets
 
-async def ws_handler(websocket, path):
-    server.clients.append(websocket)
+async def ws_handler(websocket):
+    server.clients.add(websocket)
     try:
         await websocket.wait_closed()
     finally:
-        server.clients.remove(websocket)
+        server.clients.discard(websocket)
 
-async def broadcast(data):
-    if server.clients:
-        await asyncio.wait([c.send(data) for c in server.clients])
+async def broadcast(payload):
+    if not server.clients:
+        return
+    data = json.dumps(payload)
+    await asyncio.gather(
+        *(c.send(data) for c in server.clients), return_exceptions=True
+    )
 ```
 
 ### 3. Тестування
@@ -60,6 +66,22 @@ python udp_ws_bridge.py
 # in another terminal
 python udp_client.py
 ```
+
+## Перевірка
+
+Надішліть валідний і битий пакети, потім перевірте лічильники:
+
+```bash
+python checks/check_lab.py --target solution
+```
+
+Валідний пакет доходить до WebSocket-клієнта, битий не валить процес.
+
+## Розбір збоїв
+
+- Порт зайнятий — `ss -lunp | grep 14550` покаже процес
+- Пакет не доходить — перевірте адресу: `127.0.0.1` vs `0.0.0.0`
+- Клієнт відключається і не видаляється зі списку — ріст пам’яті
 
 ## Очікуваний результат
 

@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 venv/
 .env
+# capstone/.env містить лише COMPOSE_PROFILES, без секретів
+!capstone/.env
 
 # C++
 build/
@@ -30,3 +32,10 @@ Thumbs.db
 # Temporary
 *.tmp
 *.swp
+
+# Docs build
+site/
+.mkdocs-build/
+
+# Test artifacts
+.pytest_cache/

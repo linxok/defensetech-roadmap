@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: drone-telemetry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+        - name: gateway
+          image: capstone-gateway:1.0.0
+          env:
+            - name: BACKEND_URL
+              value: "http://backend:8000"
+            - name: MAVLINK_SOURCE
+              value: "udp:0.0.0.0:14550"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: drone-telemetry
+spec:
+  selector:
+    app: gateway
+  ports:
+    - name: mavlink
+      port: 14550
+      protocol: UDP

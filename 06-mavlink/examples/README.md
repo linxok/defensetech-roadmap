@@ -1,5 +1,5 @@
-# Приклади коду
+# Приклади 06: MAVLink: протокол і gateway
 
-Тут зібрані приклади коду для модуля.
+У `examples/` — heartbeat, парсер батареї і повний gateway. Фікстури кадрів генеруються в тестах через pymavlink.
 
-Запускайте їх у відповідному середовищі (Python venv, ROS2 workspace, Next.js проєкт тощо).
+Запуск: `pip install -r requirements.txt` (venv репозиторію).

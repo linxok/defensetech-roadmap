@@ -1,5 +1,5 @@
-# Приклади коду
+# Приклади 07: ArduPilot: керування польотом
 
-Тут зібрані приклади коду для модуля.
+У `examples/` — REST API, guided takeoff і RTL. Еталон із тестами: `solution/ardupilot_api.py`.
 
-Запускайте їх у відповідному середовищі (Python venv, ROS2 workspace, Next.js проєкт тощо).
+Запуск: `pip install -r requirements.txt` (venv репозиторію).

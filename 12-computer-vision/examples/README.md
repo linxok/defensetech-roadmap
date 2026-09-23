@@ -1,5 +1,5 @@
-# Приклади коду
+# Приклади 12: Комп’ютерний зір на борту
 
-Тут зібрані приклади коду для модуля.
+У `examples/` — детекція OpenCV DNN і трекінг. Еталон із тестами: `solution/detection.py`.
 
-Запускайте їх у відповідному середовищі (Python venv, ROS2 workspace, Next.js проєкт тощо).
+Запуск: `pip install -r requirements.txt` (venv репозиторію).

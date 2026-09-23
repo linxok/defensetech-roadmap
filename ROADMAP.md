@@ -1,6 +1,9 @@
 # Learning Roadmap
 
-A visual overview of the path from senior full-stack developer to DefenseTech engineer.
+Visual path from senior full-stack developer to a Drone / Autopilot
+Software engineer. One track, depth over breadth.
+
+## Dependency graph
 
 ```mermaid
 graph LR
@@ -21,36 +24,42 @@ graph LR
     O --> P[15 DevOps]
     P --> Q[16 Portfolio Projects]
     Q --> R[17 Interview]
+
+    H --> CAP[capstone/]
+    I --> CAP
+    J --> CAP
+    K --> CAP
+    O --> CAP
+    P --> CAP
 ```
 
-## Milestones
+## Track Drone / Autopilot Software
 
-1. **Foundation** — complete modules 00–03.
-2. **Core programming** — complete modules 04–05.
-3. **Drone middleware** — complete modules 06–09.
-4. **Enterprise backend** — complete modules 10–11.
-5. **Intelligence layer** — complete modules 12–13.
-6. **End-to-end system** — complete modules 14–15.
-7. **Portfolio & interview** — complete modules 16–17.
+| Stage | Modules | Exit artifact |
+|---|---|---|
+| Foundation | 00–03 | Environment, SITL, serial daemon, UDP/WS bridge |
+| Core code | 04–05 | Telemetry API, C++ MAVLink parser with CRC test |
+| Drone middleware | 06–09 | Gateway, ArduPilot REST, PX4 params/logs, ROS2 bridge |
+| System | 10, 14–15 | Queue pipeline, GCS UI, container deploy |
+| Career | 16–17 | Public portfolio, interview set |
 
-## Portfolio projects
+Modules 11–13 are studied at outline level for this track; they become
+deep only in the CV/AI or Backend tracks.
 
-- Telemetry service
-- Mission service
-- Fleet manager
-- Ground Control UI
-- MAVLink gateway
-- AI detection service
-- Video analytics pipeline
-- Flight log analyzer
-- Drone AI agent
-- Defense dashboard
+## Milestones (part-time, 12–15 h/week)
+
+1. **Weeks 1–2 — Foundation.** SITL heartbeat, plan, serial daemon.
+2. **Weeks 3–6 — Code.** FastAPI telemetry API, C++ parser.
+3. **Weeks 7–14 — Drone middleware.** MAVLink gateway, ArduPilot commands,
+   PX4 parameters and logs, ROS2 bridge.
+4. **Weeks 15–20 — System.** Capstone pipeline, GCS UI, Docker/K8s.
+5. **Weeks 21–26 — Career.** Portfolio, mock interviews, applications.
 
 ## Success checklist
 
-- [ ] Complete all modules
-- [ ] Build 10 public GitHub projects
-- [ ] Deploy services with Docker
-- [ ] Demonstrate ArduPilot SITL integration
-- [ ] Build AI-assisted Ground Control prototype
-- [ ] Prepare CV focused on DefenseTech
+- [ ] Capstone runs end-to-end with `docker compose up`
+- [ ] `python scripts/run_lab_checks.py` shows 18 passed
+- [ ] ArduPilot SITL smoke test passes locally
+- [ ] Two public repositories with README, tests and CI
+- [ ] One system design case (1000 drones) rehearsed out loud
+- [ ] CV and GitHub profile point to the track

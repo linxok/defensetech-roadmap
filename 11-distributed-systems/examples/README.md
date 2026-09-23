@@ -1,5 +1,5 @@
-# Приклади коду
+# Приклади 11: Розподілені системи
 
-Тут зібрані приклади коду для модуля.
+У `examples/` — клієнт і compose для Kafka. Еталон контракту: `solution/telemetry.proto`.
 
-Запускайте їх у відповідному середовищі (Python venv, ROS2 workspace, Next.js проєкт тощо).
+Запуск: `pip install -r requirements.txt` (venv репозиторію).

@@ -1,5 +1,5 @@
-# Приклади коду
+# Приклади 08: PX4: параметри, uORB і логи
 
-Тут зібрані приклади коду для модуля.
+У `examples/` — CLI параметрів і звіт по ULog. Еталон CLI: `solution/px4_param.py`.
 
-Запускайте їх у відповідному середовищі (Python venv, ROS2 workspace, Next.js проєкт тощо).
+Запуск: `pip install -r requirements.txt` (venv репозиторію).

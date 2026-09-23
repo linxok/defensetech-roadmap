@@ -1,13 +1,19 @@
-# Ресурси 14
+# Ресурси 14: Наземна станція (GCS)
 
-## Документація
+Головний список джерел модуля. Первинні джерела — обов'язкові,
+решта — за потреби.
 
-- React docs
-- Next.js docs
-- Leaflet docs
-- react-leaflet docs
+## Первинні джерела
+
+- [MDN: WebSocket API](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)клієнт, reconnect, heartbeat
+- [React docs](https://react.dev/learn)стан, ефекти, оптимізація
+- [Leaflet docs](https://leafletjs.com/reference.html)маркери, полілінії, тайли
+- [MapLibre GL](https://maplibre.org/maplibre-gl-js/docs/)векторні карти
+- [OpenStreetMap tile usage](https://operations.osmfoundation.org/policies/tiles/)правила використання тайлів
 
 ## Додатково
 
-- Пошукайте актуальні репозиторії на GitHub за ключовими словами модуля.
-- Долучайтеся до спільнот і ставте запитання.
+- QGroundControl source — еталонний GCS
+- Web Content Accessibility Guidelines — читабельність
+
+Принцип: якщо переказ суперечить специфікації — правда в специфікації.

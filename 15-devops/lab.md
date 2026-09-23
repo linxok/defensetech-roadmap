@@ -64,6 +64,23 @@ docker build -t api:latest .
 kubectl apply -f k8s/
 ```
 
+## Перевірка
+
+Перевірте артефакти і зберіть образ:
+
+```bash
+python checks/check_lab.py --target solution
+docker compose -f solution/docker-compose.yml build
+```
+
+Очікування: non-root образ, healthchecks, probes і resources у манифесті, жодного `:latest`.
+
+## Розбір збоїв
+
+- Образ падає на healthcheck — немає `/health`
+- Compose стартує до готовності БД — потрібен `condition: service_healthy`
+- `:latest` у манифесті — невідтворюваний деплой
+
 ## Очікуваний результат
 
 - Dockerfile, docker-compose.yml, K8s manifest.

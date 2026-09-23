@@ -1,5 +1,5 @@
-# Приклади коду
+# Приклади 05: Сучасний C++
 
-Тут зібрані приклади коду для модуля.
+У `examples/` — справжній thread pool; у `solution/` — він же плюс MAVLink-парсер із тестом.
 
-Запускайте їх у відповідному середовищі (Python venv, ROS2 workspace, Next.js проєкт тощо).
+Запуск: `pip install -r requirements.txt` (venv репозиторію).

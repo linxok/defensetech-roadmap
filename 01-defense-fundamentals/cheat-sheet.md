@@ -1,8 +1,7 @@
-# Cheat Sheet 01
+# Cheat Sheet 01: Основи DefenseTech і архітектура UAV
 
-- UAV: fixed-wing, multirotor, VTOL, UGV, USV.
-- FC: Pixhawk, Cube, Matek.
-- ArduPilot: відкритий, гнучкий.
-- PX4: модульний, корпоративний.
-- Режими: STABILIZE, ALT_HOLD, LOITER, RTL, AUTO, GUIDED.
-- SITL: sim_vehicle.py / make px4_sitl.
+- `sim_vehicle.py -v ArduCopter --console --map` — SITL з консоллю
+- `--out=udp:127.0.0.1:14550` — додатковий вихід для GCS
+- Режими Copter: STABILIZE, ALT_HOLD, LOITER, GUIDED, AUTO, RTL, LAND
+- `MAV_CMD_NAV_TAKEOFF`, `MAV_CMD_NAV_LAND`, `MAV_CMD_COMPONENT_ARM_DISARM`
+- ESC протоколи: PWM 50–400 Гц, OneShot, DShot150/300/600

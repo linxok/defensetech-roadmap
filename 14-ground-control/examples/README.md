@@ -1,5 +1,5 @@
-# Приклади коду
+# Приклади 14: Наземна станція (GCS)
 
-Тут зібрані приклади коду для модуля.
+У `examples/` — сторінка GCS і package.json. Еталон із тестами: `solution/`.
 
-Запускайте їх у відповідному середовищі (Python venv, ROS2 workspace, Next.js проєкт тощо).
+Запуск: `pip install -r requirements.txt` (venv репозиторію).

@@ -35,11 +35,14 @@ print(f"Connected to system {conn.target_system}")
 
 ```python
 while True:
-    msg = conn.recv_match(blocking=True)
+    msg = conn.recv_match(blocking=True, timeout=1.0)
     if msg is None:
         continue
     print(msg.to_dict())
 ```
+
+У async-коді цей цикл обов’язково виконується через `asyncio.to_thread`,
+інакше event loop блокується на кожному виклику.
 
 ### 4. Фільтрація GPS і батареї
 
@@ -59,6 +62,7 @@ elif msg.get_type() == 'BATTERY_STATUS':
 
 ```python
 import asyncio
+import json
 import websockets
 
 clients = set()
@@ -68,21 +72,25 @@ async def register(websocket):
     try:
         await websocket.wait_closed()
     finally:
-        clients.remove(websocket)
+        clients.discard(websocket)
 
-async def broadcast(data):
-    if clients:
-        await asyncio.wait([c.send(data) for c in clients])
+async def broadcast(payload):
+    if not clients:
+        return
+    data = json.dumps(payload)
+    await asyncio.gather(*(c.send(data) for c in clients), return_exceptions=True)
 
 async def main():
-    asyncio.create_task(telemetry_loop())
     async with websockets.serve(register, 'localhost', 8765):
-        await asyncio.Future()
+        await telemetry_loop()
 
 async def telemetry_loop():
     while True:
-        msg = conn.recv_match(blocking=True)
-        await broadcast(str(msg.to_dict()))
+        # recv_match блокуючий: виконуємо його в потоці
+        msg = await asyncio.to_thread(conn.recv_match, blocking=True, timeout=1.0)
+        if msg is None:
+            continue
+        await broadcast(msg.to_dict())
 
 asyncio.run(main())
 ```
@@ -93,6 +101,22 @@ asyncio.run(main())
 2. Запустіть шлюз.
 3. Відкрийте `examples/websocket_client.html` або `wscat`.
 4. Переконайтеся, що JSON надходить.
+
+## Перевірка
+
+Запустіть SITL і gateway, потім перевірте контракт:
+
+```bash
+python checks/check_lab.py --target solution
+```
+
+Скрипт перевіряє конвертацію кадрів, розсилку та відсутність блокуючих викликів в async-коді.
+
+## Розбір збоїв
+
+- Немає heartbeat — SITL і gateway не бачать один одного на порту 14550
+- `RuntimeError: Passing coroutines` — `asyncio.wait` замість `gather`
+- Клієнти не отримують даних — перевірте, що `broadcast` викликається
 
 ## Очікуваний результат
 

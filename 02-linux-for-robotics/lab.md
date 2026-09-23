@@ -63,6 +63,23 @@ sudo systemctl start drone-serial
 sudo journalctl -u drone-serial -f
 ```
 
+## Перевірка
+
+Після запуску сервісу перевірте активний стан і лог старту:
+
+```bash
+systemctl status drone-telemetry
+journalctl -u drone-telemetry --since "5 min ago"
+```
+
+Потім витягніть USB: сервіс має перезапуститися, а в журналі — бути причина.
+
+## Розбір збоїв
+
+- `Unit file ... not found` — неправильний шлях у `ExecStart`
+- Сервіс стартує до появи пристрою — додайте `After=dev-ttyFC.device`
+- `Permission denied` на порт — користувач не в групі `dialout`
+
 ## Очікуваний результат
 
 - Сервіс запущено і пише логи.

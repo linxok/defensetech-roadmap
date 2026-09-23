@@ -1,5 +1,5 @@
-# Приклади коду
+# Приклади 09: ROS2: мости телеметрії
 
-Тут зібрані приклади коду для модуля.
+У `examples/` — publisher, subscriber і launch. Еталон з тестованою логікою: `solution/`.
 
-Запускайте їх у відповідному середовищі (Python venv, ROS2 workspace, Next.js проєкт тощо).
+Запуск: `pip install -r requirements.txt` (venv репозиторію).

@@ -1,0 +1,21 @@
+[Unit]
+Description=MAVLink serial telemetry daemon
+Documentation=https://ardupilot.org/dev/docs/mavlink-basics.html
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dronesvc
+Group=dialout
+WorkingDirectory=/opt/drone-telemetry
+ExecStart=/opt/drone-telemetry/read_serial.sh /dev/ttyUSB0 57600
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+# Обмеження: serial-порт доступний лише через DeviceAllow
+DeviceAllow=/dev/ttyUSB0 rw
+
+[Install]
+WantedBy=multi-user.target

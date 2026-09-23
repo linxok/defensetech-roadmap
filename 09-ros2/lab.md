@@ -63,6 +63,24 @@ ros2 run drone_bridge telemetry_publisher
 ros2 run drone_bridge telemetry_subscriber
 ```
 
+## Перевірка
+
+Перевірте чисту логіку, а потім повний ROS2:
+
+```bash
+python checks/check_lab.py --target solution
+colcon build && source install/setup.bash
+ros2 run drone_bridge telemetry_bridge
+```
+
+Потік: `ros2 topic hz /drone/telemetry` показує задану частоту.
+
+## Розбір збоїв
+
+- `Package not found` — не виконано `source install/setup.bash`
+- Підписник не отримує даних — різні `ROS_DOMAIN_ID` або QoS
+- Вузол не завершується — немає `destroy_node`/`shutdown`
+
 ## Очікуваний результат
 
 - ROS2 пакет `drone_bridge`.
