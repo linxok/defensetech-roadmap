@@ -9,5 +9,5 @@
 #
 # Альтернатива (якщо mavsdk не потрібен): приберіть mavsdk із
 # requirements.txt і встановіть цей файл у основний venv.
-grpcio==1.64.1
-grpcio-tools==1.64.1
+grpcio==1.84.0
+grpcio-tools==1.84.0
