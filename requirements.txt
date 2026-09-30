@@ -1,7 +1,7 @@
 fastapi==0.141.1
-uvicorn[standard]==0.53.0
-pymavlink==2.4.49
-mavsdk==3.17.4
+uvicorn[standard]==0.54.0
+pymavlink==2.4.50
+mavsdk==4.0.0
 pyserial==3.5
 opencv-python==5.0.0.93
 numpy==2.5.3

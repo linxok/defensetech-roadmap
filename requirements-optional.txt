@@ -2,5 +2,5 @@
 # модуль 12 (Ultralytics-демо) і модуль 13 (LLM/RAG).
 # Ядро курсу і CI працюють без них.
 langchain==1.4.2
-openai==3.16.2
-ultralytics==8.4.157
+openai==3.19.2
+ultralytics==8.4.163
