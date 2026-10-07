@@ -1,12 +1,12 @@
-fastapi==0.141.1
-uvicorn[standard]==0.53.0
-pymavlink==2.4.49
-mavsdk==3.17.4
+fastapi==0.142.2
+uvicorn[standard]==0.54.0
+pymavlink==2.4.50
+mavsdk==4.0.3
 pyserial==3.5
 opencv-python==5.0.0.93
 numpy==2.5.3
 paho-mqtt==2.1.0
-websockets==17.1
+websockets==17.2
 redis==8.1.0
 pika==1.4.4
 psycopg2-binary==2.9.13
