@@ -1,6 +1,6 @@
 # Важкі опціональні залежності (CV/AI). Ставте лише за потреби:
 # модуль 12 (Ultralytics-демо) і модуль 13 (LLM/RAG).
 # Ядро курсу і CI працюють без них.
-langchain==1.4.3
-openai==3.24.0
-ultralytics==8.4.172
+langchain==1.4.7
+openai==3.37.0
+ultralytics==8.4.188
